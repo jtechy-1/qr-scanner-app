@@ -1,3 +1,4 @@
+// File: src/components/QRScanner.jsx
 import { useEffect, useRef, useState } from 'react';
 import { Html5Qrcode } from 'html5-qrcode';
 import { supabase } from '../lib/supabaseClient';
@@ -11,13 +12,17 @@ const QRScanner = () => {
   const html5QrCodeRef = useRef(null);
   const streamTrackRef = useRef(null);
   const isRunningRef = useRef(false);
-  const scanLockedRef = useRef(false); // 🔒 prevent duplicate saves
+  const scanLockedRef = useRef(false);
 
-  // 🔄 Load last 10 scans from Supabase
   const loadRecentScans = async () => {
+    const user = await supabase.auth.getUser();
+    const user_id = user?.data?.user?.id;
+    if (!user_id) return;
+
     const { data, error } = await supabase
       .from('scans')
       .select('*')
+      .eq('user_id', user_id)
       .order('timestamp', { ascending: false })
       .limit(10);
 
@@ -29,7 +34,7 @@ const QRScanner = () => {
   };
 
   useEffect(() => {
-    loadRecentScans(); // Load on page load
+    loadRecentScans();
   }, []);
 
   const startScanner = async () => {
@@ -50,18 +55,24 @@ const QRScanner = () => {
           { fps: 10, qrbox: { width: 250, height: 250 } },
           async (decodedText) => {
             if (!scanLockedRef.current) {
-              scanLockedRef.current = true; // 🔒 lock to prevent duplicates
-
+              scanLockedRef.current = true;
               setResult(decodedText);
 
-              // 🔊 Play beep sound
               const beep = new Audio('/beep.mp3');
               beep.play();
 
-              // 💾 Save to Supabase
+              const user = await supabase.auth.getUser();
+              const user_id = user?.data?.user?.id;
+
+              if (!user_id) {
+                setMessage("❌ You're not logged in");
+                return;
+              }
+
               const { error } = await supabase.from('scans').insert({
                 code: decodedText,
-                timestamp: new Date().toISOString()
+                timestamp: new Date().toISOString(),
+                user_id
               });
 
               if (error) {
@@ -69,8 +80,8 @@ const QRScanner = () => {
                 setMessage('❌ Error saving scan: ' + error.message);
               } else {
                 setMessage('✅ Scan saved');
-                await loadRecentScans(); // 🔄 Refresh scan history
-                await stopScanner();     // 🛑 Stop scanner
+                await loadRecentScans();
+                await stopScanner();
               }
             }
           },
@@ -87,7 +98,6 @@ const QRScanner = () => {
             streamTrackRef.current = track;
           }
 
-          // 🔓 Reset scan lock when new session starts
           scanLockedRef.current = false;
         })
         .catch(err => {
@@ -107,7 +117,7 @@ const QRScanner = () => {
         isRunningRef.current = false;
         setIsScanning(false);
         setFlashOn(false);
-        scanLockedRef.current = false; // 🔓 unlock on stop
+        scanLockedRef.current = false;
         setMessage('✅ Scanner stopped');
       } catch (err) {
         console.warn('Stop error:', err.message);

@@ -1,12 +1,54 @@
-import QRScanner from './components/QRScanner'
+// File: src/App.jsx
+import { BrowserRouter as Router, Routes, Route, Link, Navigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { supabase } from './lib/supabaseClient';
+import QRScanner from './components/QRScanner';
+import Login from './pages/Login';
 
-function App() {
+const App = () => {
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      const { data } = await supabase.auth.getUser();
+      setUser(data?.user || null);
+    };
+    fetchUser();
+
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user || null);
+    });
+
+    return () => {
+      listener.subscription.unsubscribe();
+    };
+  }, []);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    setUser(null);
+  };
+
   return (
-    <div style={{ padding: '20px' }}>
-      <h1>QR Scanner with Supabase</h1>
-      <QRScanner />
-    </div>
-  )
-}
+    <Router>
+      <nav style={{ padding: '10px', borderBottom: '1px solid #ccc' }}>
+        {user ? (
+          <>
+            <Link to="/scanner" style={{ marginRight: '10px' }}>Scanner</Link>
+            <button onClick={handleLogout}>Logout</button>
+          </>
+        ) : (
+          <Link to="/login">Login</Link>
+        )}
+      </nav>
 
-export default App
+      <Routes>
+        <Route path="/login" element={user ? <Navigate to="/scanner" /> : <Login />} />
+        <Route path="/scanner" element={user ? <QRScanner /> : <Navigate to="/login" />} />
+        <Route path="*" element={<Navigate to={user ? "/scanner" : "/login"} />} />
+      </Routes>
+    </Router>
+  );
+};
+
+export default App;
