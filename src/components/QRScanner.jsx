@@ -14,7 +14,13 @@ const QRScanner = () => {
 
     Html5Qrcode.getCameras().then(devices => {
       if (devices && devices.length) {
-        const cameraId = devices[0].id;
+        // ✅ Try to select back camera if available
+        const backCamera = devices.find(device =>
+          device.label.toLowerCase().includes('back') ||
+          device.label.toLowerCase().includes('environment')
+        );
+
+        const cameraId = backCamera ? backCamera.id : devices[0].id;
 
         html5QrCode
           .start(
@@ -24,7 +30,6 @@ const QRScanner = () => {
               if (decodedText !== result) {
                 setResult(decodedText);
 
-                // Log to Supabase
                 const { error } = await supabase.from('scans').insert({
                   code: decodedText,
                   timestamp: new Date().toISOString()
@@ -49,7 +54,7 @@ const QRScanner = () => {
       }
     });
 
-    // Cleanup on component unmount
+    // ✅ Stop camera on component unmount
     return () => {
       if (isRunningRef.current && html5QrCodeRef.current) {
         html5QrCodeRef.current
