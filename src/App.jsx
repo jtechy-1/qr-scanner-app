@@ -1,9 +1,12 @@
 // File: src/App.jsx
-import { BrowserRouter as Router, Routes, Route, Link, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { supabase } from './lib/supabaseClient';
 import QRScanner from './components/QRScanner';
 import Login from './pages/Login';
+import Header from './components/Header';
+import Footer from './components/Footer';
+import './App.css';
 
 const App = () => {
   const [user, setUser] = useState(null);
@@ -31,22 +34,15 @@ const App = () => {
 
   return (
     <Router>
-      <nav style={{ padding: '10px', borderBottom: '1px solid #ccc' }}>
-        {user ? (
-          <>
-            <Link to="/scanner" style={{ marginRight: '10px' }}>Scanner</Link>
-            <button onClick={handleLogout}>Logout</button>
-          </>
-        ) : (
-          <Link to="/login">Login</Link>
-        )}
-      </nav>
-
-      <Routes>
-        <Route path="/login" element={user ? <Navigate to="/scanner" /> : <Login />} />
-        <Route path="/scanner" element={user ? <QRScanner /> : <Navigate to="/login" />} />
-        <Route path="*" element={<Navigate to={user ? "/scanner" : "/login"} />} />
-      </Routes>
+      <Header user={user} onLogout={handleLogout} />
+      <main className="container">
+        <Routes>
+          <Route path="/login" element={user ? <Navigate to="/scanner" /> : <Login />} />
+          <Route path="/scanner" element={user ? <QRScanner /> : <Navigate to="/login" />} />
+          <Route path="*" element={<Navigate to={user ? "/scanner" : "/login"} />} />
+        </Routes>
+      </main>
+      <Footer />
     </Router>
   );
 };
