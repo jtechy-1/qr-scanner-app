@@ -1,4 +1,3 @@
-// File: src/components/QRScanner.jsx
 import { useEffect, useRef, useState } from 'react';
 import { Html5Qrcode } from 'html5-qrcode';
 import { supabase } from '../lib/supabaseClient';
@@ -7,30 +6,19 @@ const QRScanner = () => {
   const [result, setResult] = useState('');
   const [message, setMessage] = useState('');
   const [isScanning, setIsScanning] = useState(false);
-  const [flashOn, setFlashOn] = useState(false);
   const [scanHistory, setScanHistory] = useState([]);
   const html5QrCodeRef = useRef(null);
-  const streamTrackRef = useRef(null);
-  const isRunningRef = useRef(false);
-  const scanLockedRef = useRef(false);
+  const isLocked = useRef(false);
 
   const loadRecentScans = async () => {
-    const user = await supabase.auth.getUser();
-    const user_id = user?.data?.user?.id;
-    if (!user_id) return;
-
-    const { data, error } = await supabase
+    const { data: { user } } = await supabase.auth.getUser();
+    const { data } = await supabase
       .from('scans')
       .select('*')
-      .eq('user_id', user_id)
+      .eq('user_id', user.id)
       .order('timestamp', { ascending: false })
       .limit(10);
-
-    if (!error) {
-      setScanHistory(data);
-    } else {
-      console.error('Error loading scans:', error.message);
-    }
+    setScanHistory(data || []);
   };
 
   useEffect(() => {
@@ -42,133 +30,77 @@ const QRScanner = () => {
     html5QrCodeRef.current = html5QrCode;
 
     const devices = await Html5Qrcode.getCameras();
-    if (devices && devices.length) {
-      const backCamera = devices.find(device =>
-        device.label.toLowerCase().includes('back') ||
-        device.label.toLowerCase().includes('environment')
-      );
-      const cameraId = backCamera ? backCamera.id : devices[0].id;
+    if (devices.length) {
+      const cameraId = devices[0].id;
 
-      html5QrCode
-        .start(
-          cameraId,
-          { fps: 10, qrbox: { width: 250, height: 250 } },
-          async (decodedText) => {
-            if (!scanLockedRef.current) {
-              scanLockedRef.current = true;
-              setResult(decodedText);
+      html5QrCode.start(
+        cameraId,
+        { fps: 10, qrbox: 250 },
+        async (decodedText) => {
+          if (!isLocked.current) {
+            isLocked.current = true;
+            setResult(decodedText);
+            const beep = new Audio('/beep.mp3');
+            beep.play();
 
-              const beep = new Audio('/beep.mp3');
-              beep.play();
+            const { data: { user } } = await supabase.auth.getUser();
+            const { error } = await supabase.from('scans').insert({
+              code: decodedText,
+              timestamp: new Date().toISOString(),
+              user_id: user.id
+            });
 
-              const user = await supabase.auth.getUser();
-              const user_id = user?.data?.user?.id;
-
-              if (!user_id) {
-                setMessage("❌ You're not logged in");
-                return;
-              }
-
-              const { error } = await supabase.from('scans').insert({
-                code: decodedText,
-                timestamp: new Date().toISOString(),
-                user_id
-              });
-
-              if (error) {
-                console.error('❌ Supabase insert error:', error);
-                setMessage('❌ Error saving scan: ' + error.message);
-              } else {
-                setMessage('✅ Scan saved');
-                await loadRecentScans();
-                await stopScanner();
-              }
+            if (!error) {
+              setMessage('✅ Scan saved');
+              await stopScanner();
+              await loadRecentScans();
+            } else {
+              setMessage('❌ ' + error.message);
             }
-          },
-          (errorMessage) => {
-            console.warn('Scan error:', errorMessage);
           }
-        )
-        .then(() => {
-          isRunningRef.current = true;
-          setIsScanning(true);
-
-          const track = html5QrCode.getRunningTrack();
-          if (track && typeof track.applyConstraints === 'function') {
-            streamTrackRef.current = track;
-          }
-
-          scanLockedRef.current = false;
-        })
-        .catch(err => {
-          console.error('Camera start error:', err);
-          setMessage('❌ Failed to start camera');
-        });
-    } else {
-      setMessage('❌ No cameras found');
+        },
+        () => {}
+      );
+      setIsScanning(true);
     }
   };
 
   const stopScanner = async () => {
-    if (isRunningRef.current && html5QrCodeRef.current) {
-      try {
-        await html5QrCodeRef.current.stop();
-        await html5QrCodeRef.current.clear();
-        isRunningRef.current = false;
-        setIsScanning(false);
-        setFlashOn(false);
-        scanLockedRef.current = false;
-        setMessage('✅ Scanner stopped');
-      } catch (err) {
-        console.warn('Stop error:', err.message);
-        setMessage('❌ Error stopping scanner');
-      }
-    }
-  };
-
-  const toggleFlashlight = async () => {
-    if (!streamTrackRef.current) {
-      setMessage('⚠️ Flash not supported or scanner not running');
-      return;
-    }
-
-    try {
-      await streamTrackRef.current.applyConstraints({
-        advanced: [{ torch: !flashOn }]
-      });
-      setFlashOn(!flashOn);
-      setMessage(!flashOn ? '🔦 Flashlight turned ON' : '💡 Flashlight turned OFF');
-    } catch (err) {
-      console.warn('Flashlight error:', err.message);
-      setMessage('❌ Flashlight not supported');
+    if (html5QrCodeRef.current) {
+      await html5QrCodeRef.current.stop();
+      await html5QrCodeRef.current.clear();
+      html5QrCodeRef.current = null;
+      setIsScanning(false);
+      isLocked.current = false;
     }
   };
 
   return (
-    <div className="container">
-      <div className="card">
-        <h2>QR Scanner</h2>
-        {!isScanning && <button onClick={startScanner}>Start Scan</button>}
-        {isScanning && (
-          <>
-            <button onClick={stopScanner}>Cancel Scan</button>
-            <button onClick={toggleFlashlight}>
-              {flashOn ? 'Turn Off Flashlight' : 'Turn On Flashlight'}
-            </button>
-          </>
+    <div className="container mt-4">
+      <div className="card p-4 mb-4">
+        <h3 className="text-primary mb-3">QR Scanner</h3>
+        {!isScanning && (
+          <button className="btn btn-success w-100 mb-2" onClick={startScanner}>
+            Start Scan
+          </button>
         )}
-        <div id="reader"></div>
-        <p><strong>Scanned Code:</strong> {result}</p>
-        <p>{message}</p>
+        {isScanning && (
+          <button className="btn btn-danger w-100 mb-2" onClick={stopScanner}>
+            Stop Scan
+          </button>
+        )}
+        <div id="reader" className="my-3" style={{ width: '100%' }} />
+        {result && <p className="text-success fw-bold">Scanned: {result}</p>}
+        {message && <p className="text-muted">{message}</p>}
       </div>
 
-      <div className="card">
-        <h3>📜 Last 10 Scans</h3>
-        <ul>
+      <div className="card p-4">
+        <h5 className="mb-3">Recent Scans</h5>
+        <ul className="list-group">
           {scanHistory.map(scan => (
-            <li key={scan.id}>
-              <strong>{scan.code}</strong><br />
-              <small>{new Date(scan.timestamp).toLocaleString()}</small>
+            <li key={scan.id} className="list-group-item">
+              <div className="fw-bold">{scan.code}</div>
+              <small className="text-muted">{new Date(scan.timestamp).toLocaleString()}</small>
             </li>
           ))}
         </ul>
