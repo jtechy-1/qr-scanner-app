@@ -34,14 +34,14 @@ const App = () => {
 
   return (
     <Router>
-      <Header user={user} onLogout={handleLogout} />
+      <Header user={user} />
       <div className="d-flex">
-        {user && <Sidebar />}
+        {user && <Sidebar onLogout={handleLogout} />}
         <main className="container mt-4 flex-grow-1">
           <Routes>
             <Route path="/login" element={user ? <Navigate to="/dashboard" /> : <Login />} />
-            <Route path="/scanner" element={user ? <QRScanner /> : <Navigate to="/login" />} />
             <Route path="/dashboard" element={user ? <Dashboard /> : <Navigate to="/login" />} />
+            <Route path="/scanner" element={user ? <QRScanner /> : <Navigate to="/login" />} />
             <Route path="*" element={<Navigate to={user ? "/dashboard" : "/login"} />} />
           </Routes>
         </main>

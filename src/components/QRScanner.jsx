@@ -29,15 +29,9 @@ const QRScanner = () => {
     const html5QrCode = new Html5Qrcode("reader");
     html5QrCodeRef.current = html5QrCode;
 
-    const devices = await Html5Qrcode.getCameras();
-    if (devices.length) {
-      const backCamera = devices.find(device =>
-        /back|rear|environment/i.test(device.label)
-      ) || devices[0];
-      const cameraId = backCamera.id;
-
-      html5QrCode.start(
-        cameraId,
+    try {
+      await html5QrCode.start(
+        { facingMode: "environment" }, // ✅ Use back camera
         { fps: 10, qrbox: 250 },
         async (decodedText) => {
           if (!isLocked.current) {
@@ -63,9 +57,10 @@ const QRScanner = () => {
         },
         () => {}
       );
+
       setIsScanning(true);
-    } else {
-      setMessage("No camera devices found.");
+    } catch (err) {
+      setMessage("❌ Failed to start camera: " + err.message);
     }
   };
 
