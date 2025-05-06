@@ -17,27 +17,21 @@ const Login = () => {
   };
 
   return (
-    <div style={{ padding: '20px' }}>
+    <div className="container">
       <h2>Login with Email & Password</h2>
       <input
         type="email"
         placeholder="Email"
         value={email}
         onChange={(e) => setEmail(e.target.value)}
-        style={{ padding: '10px', width: '300px', marginBottom: '10px' }}
       />
-      <br />
       <input
         type="password"
         placeholder="Password"
         value={password}
         onChange={(e) => setPassword(e.target.value)}
-        style={{ padding: '10px', width: '300px', marginBottom: '10px' }}
       />
-      <br />
-      <button onClick={handleLogin} style={{ padding: '10px 20px' }}>
-        Log In
-      </button>
+      <button onClick={handleLogin}>Log In</button>
       {message && <p style={{ marginTop: '15px' }}>{message}</p>}
     </div>
   );

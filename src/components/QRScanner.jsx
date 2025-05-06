@@ -145,27 +145,23 @@ const QRScanner = () => {
   };
 
   return (
-    <div>
+    <div className="container">
       <h2>QR Scanner</h2>
 
       {!isScanning && (
-        <button onClick={startScanner} style={{ marginRight: '10px' }}>
-          Start Scan
-        </button>
+        <button onClick={startScanner}>Start Scan</button>
       )}
 
       {isScanning && (
         <>
-          <button onClick={stopScanner} style={{ marginRight: '10px' }}>
-            Cancel Scan
-          </button>
+          <button onClick={stopScanner}>Cancel Scan</button>
           <button onClick={toggleFlashlight}>
             {flashOn ? 'Turn Off Flashlight' : 'Turn On Flashlight'}
           </button>
         </>
       )}
 
-      <div id="reader" style={{ width: '100%', maxWidth: 400, marginTop: '15px' }}></div>
+      <div id="reader"></div>
 
       <p><strong>Scanned Code:</strong> {result}</p>
       <p>{message}</p>
@@ -175,7 +171,7 @@ const QRScanner = () => {
       <ul>
         {scanHistory.map(scan => (
           <li key={scan.id}>
-            <strong>{scan.code}</strong> <br />
+            <strong>{scan.code}</strong><br />
             <small>{new Date(scan.timestamp).toLocaleString()}</small>
           </li>
         ))}

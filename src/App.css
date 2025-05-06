@@ -4,6 +4,42 @@
   padding: 2rem;
   text-align: center;
 }
+/* Responsive base styles */
+body {
+  font-family: sans-serif;
+  margin: 0;
+  padding: 0;
+  background: #f9f9f9;
+}
+
+.container {
+  padding: 1rem;
+  max-width: 600px;
+  margin: auto;
+}
+
+button, input {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: 12px;
+  font-size: 16px;
+  margin-bottom: 12px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+
+#reader {
+  width: 100% !important;
+  max-width: 400px;
+  margin: 20px auto;
+  display: block;
+}
+
+ul {
+  list-style-type: none;
+  padding: 0;
+}
 
 .logo {
   height: 6em;
