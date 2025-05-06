@@ -11,6 +11,7 @@ const QRScanner = () => {
   const html5QrCodeRef = useRef(null);
   const streamTrackRef = useRef(null);
   const isRunningRef = useRef(false);
+  const scanLockedRef = useRef(false); // 🔒 prevent duplicate saves
 
   // 🔄 Load last 10 scans from Supabase
   const loadRecentScans = async () => {
@@ -48,7 +49,9 @@ const QRScanner = () => {
           cameraId,
           { fps: 10, qrbox: { width: 250, height: 250 } },
           async (decodedText) => {
-            if (decodedText !== result) {
+            if (!scanLockedRef.current) {
+              scanLockedRef.current = true; // 🔒 lock to prevent duplicates
+
               setResult(decodedText);
 
               // 🔊 Play beep sound
@@ -83,6 +86,9 @@ const QRScanner = () => {
           if (track && typeof track.applyConstraints === 'function') {
             streamTrackRef.current = track;
           }
+
+          // 🔓 Reset scan lock when new session starts
+          scanLockedRef.current = false;
         })
         .catch(err => {
           console.error('Camera start error:', err);
@@ -101,6 +107,7 @@ const QRScanner = () => {
         isRunningRef.current = false;
         setIsScanning(false);
         setFlashOn(false);
+        scanLockedRef.current = false; // 🔓 unlock on stop
         setMessage('✅ Scanner stopped');
       } catch (err) {
         console.warn('Stop error:', err.message);
