@@ -146,36 +146,33 @@ const QRScanner = () => {
 
   return (
     <div className="container">
-      <h2>QR Scanner</h2>
+      <div className="card">
+        <h2>QR Scanner</h2>
+        {!isScanning && <button onClick={startScanner}>Start Scan</button>}
+        {isScanning && (
+          <>
+            <button onClick={stopScanner}>Cancel Scan</button>
+            <button onClick={toggleFlashlight}>
+              {flashOn ? 'Turn Off Flashlight' : 'Turn On Flashlight'}
+            </button>
+          </>
+        )}
+        <div id="reader"></div>
+        <p><strong>Scanned Code:</strong> {result}</p>
+        <p>{message}</p>
+      </div>
 
-      {!isScanning && (
-        <button onClick={startScanner}>Start Scan</button>
-      )}
-
-      {isScanning && (
-        <>
-          <button onClick={stopScanner}>Cancel Scan</button>
-          <button onClick={toggleFlashlight}>
-            {flashOn ? 'Turn Off Flashlight' : 'Turn On Flashlight'}
-          </button>
-        </>
-      )}
-
-      <div id="reader"></div>
-
-      <p><strong>Scanned Code:</strong> {result}</p>
-      <p>{message}</p>
-
-      <hr />
-      <h3>📜 Last 10 Scans</h3>
-      <ul>
-        {scanHistory.map(scan => (
-          <li key={scan.id}>
-            <strong>{scan.code}</strong><br />
-            <small>{new Date(scan.timestamp).toLocaleString()}</small>
-          </li>
-        ))}
-      </ul>
+      <div className="card">
+        <h3>📜 Last 10 Scans</h3>
+        <ul>
+          {scanHistory.map(scan => (
+            <li key={scan.id}>
+              <strong>{scan.code}</strong><br />
+              <small>{new Date(scan.timestamp).toLocaleString()}</small>
+            </li>
+          ))}
+        </ul>
+      </div>
     </div>
   );
 };

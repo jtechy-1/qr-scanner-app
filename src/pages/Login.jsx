@@ -18,21 +18,23 @@ const Login = () => {
 
   return (
     <div className="container">
-      <h2>Login with Email & Password</h2>
-      <input
-        type="email"
-        placeholder="Email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-      />
-      <input
-        type="password"
-        placeholder="Password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-      />
-      <button onClick={handleLogin}>Log In</button>
-      {message && <p style={{ marginTop: '15px' }}>{message}</p>}
+      <div className="card">
+        <h2>Login with Email & Password</h2>
+        <input
+          type="email"
+          placeholder="Email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
+        <input
+          type="password"
+          placeholder="Password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
+        <button onClick={handleLogin}>Log In</button>
+        {message && <p style={{ marginTop: '15px' }}>{message}</p>}
+      </div>
     </div>
   );
 };
