@@ -31,7 +31,10 @@ const QRScanner = () => {
 
     const devices = await Html5Qrcode.getCameras();
     if (devices.length) {
-      const cameraId = devices[0].id;
+      const backCamera = devices.find(device =>
+        /back|rear|environment/i.test(device.label)
+      ) || devices[0];
+      const cameraId = backCamera.id;
 
       html5QrCode.start(
         cameraId,
@@ -40,8 +43,7 @@ const QRScanner = () => {
           if (!isLocked.current) {
             isLocked.current = true;
             setResult(decodedText);
-            const beep = new Audio('/beep.mp3');
-            beep.play();
+            new Audio('/beep.mp3').play();
 
             const { data: { user } } = await supabase.auth.getUser();
             const { error } = await supabase.from('scans').insert({
@@ -62,6 +64,8 @@ const QRScanner = () => {
         () => {}
       );
       setIsScanning(true);
+    } else {
+      setMessage("No camera devices found.");
     }
   };
 
