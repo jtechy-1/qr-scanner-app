@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Html5Qrcode } from 'html5-qrcode';
 import { supabase } from '../lib/supabaseClient';
 
@@ -7,9 +7,29 @@ const QRScanner = () => {
   const [message, setMessage] = useState('');
   const [isScanning, setIsScanning] = useState(false);
   const [flashOn, setFlashOn] = useState(false);
+  const [scanHistory, setScanHistory] = useState([]);
   const html5QrCodeRef = useRef(null);
   const streamTrackRef = useRef(null);
   const isRunningRef = useRef(false);
+
+  // 🔄 Load last 10 scans from Supabase
+  const loadRecentScans = async () => {
+    const { data, error } = await supabase
+      .from('scans')
+      .select('*')
+      .order('timestamp', { ascending: false })
+      .limit(10);
+
+    if (!error) {
+      setScanHistory(data);
+    } else {
+      console.error('Error loading scans:', error.message);
+    }
+  };
+
+  useEffect(() => {
+    loadRecentScans(); // Load on page load
+  }, []);
 
   const startScanner = async () => {
     const html5QrCode = new Html5Qrcode("reader");
@@ -31,12 +51,24 @@ const QRScanner = () => {
             if (decodedText !== result) {
               setResult(decodedText);
 
+              // 🔊 Play beep sound
+              const beep = new Audio('/beep.mp3');
+              beep.play();
+
+              // 💾 Save to Supabase
               const { error } = await supabase.from('scans').insert({
                 code: decodedText,
                 timestamp: new Date().toISOString()
               });
 
-              setMessage(error ? '❌ Error saving scan' : '✅ Scan saved');
+              if (error) {
+                console.error('❌ Supabase insert error:', error);
+                setMessage('❌ Error saving scan: ' + error.message);
+              } else {
+                setMessage('✅ Scan saved');
+                await loadRecentScans(); // 🔄 Refresh scan history
+                await stopScanner();     // 🛑 Stop scanner
+              }
             }
           },
           (errorMessage) => {
@@ -47,14 +79,13 @@ const QRScanner = () => {
           isRunningRef.current = true;
           setIsScanning(true);
 
-          // Save MediaStreamTrack to control torch
-          const tracks = html5QrCode.getRunningTrack();
-          if (tracks && typeof tracks.applyConstraints === 'function') {
-            streamTrackRef.current = tracks;
+          const track = html5QrCode.getRunningTrack();
+          if (track && typeof track.applyConstraints === 'function') {
+            streamTrackRef.current = track;
           }
         })
         .catch(err => {
-          console.error('Failed to start camera:', err);
+          console.error('Camera start error:', err);
           setMessage('❌ Failed to start camera');
         });
     } else {
@@ -121,6 +152,17 @@ const QRScanner = () => {
 
       <p><strong>Scanned Code:</strong> {result}</p>
       <p>{message}</p>
+
+      <hr />
+      <h3>📜 Last 10 Scans</h3>
+      <ul>
+        {scanHistory.map(scan => (
+          <li key={scan.id}>
+            <strong>{scan.code}</strong> <br />
+            <small>{new Date(scan.timestamp).toLocaleString()}</small>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 };
