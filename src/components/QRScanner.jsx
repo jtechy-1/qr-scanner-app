@@ -56,8 +56,8 @@ const QRScanner = () => {
 
   const startScanner = async () => {
     if (html5QrCodeRef.current) {
-      await html5QrCodeRef.current.stop();
-      await html5QrCodeRef.current.clear();
+      await html5QrCodeRef.current.stop().catch(() => {});
+      await html5QrCodeRef.current.clear().catch(() => {});
       html5QrCodeRef.current = null;
     }
 
@@ -65,6 +65,9 @@ const QRScanner = () => {
     html5QrCodeRef.current = html5QrCode;
 
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      console.log("User at startScanner:", user);
+
       await html5QrCode.start(
         { facingMode: "environment" },
         { fps: 15, qrbox: 250 },
