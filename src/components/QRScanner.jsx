@@ -3,7 +3,8 @@ import { Html5Qrcode } from 'html5-qrcode';
 import { supabase } from '../lib/supabaseClient';
 
 const QRScanner = () => {
-  const [scannerHeight, setScannerHeight] = useState('250px');
+  const [scanCount, setScanCount] = useState(0);
+  const [scannerHeight, setScannerHeight] = useState('300px');
   const [result, setResult] = useState('');
   const [message, setMessage] = useState('');
   const [isScanning, setIsScanning] = useState(false);
@@ -19,12 +20,25 @@ const QRScanner = () => {
       .select('*')
       .eq('user_id', user.id)
       .order('timestamp', { ascending: false })
-      .limit(10);
+      .limit(5);
     setScanHistory(data || []);
   };
 
   useEffect(() => {
     loadRecentScans();
+
+    const loadHourlyScanCount = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+      const { count } = await supabase
+        .from('scans')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+        .gte('timestamp', oneHourAgo);
+      setScanCount(count || 0);
+    };
+
+    loadHourlyScanCount();
 
     const updateHeight = () => {
       setScannerHeight(window.innerWidth > window.innerHeight ? '300px' : '200px');
@@ -152,11 +166,11 @@ const QRScanner = () => {
         {message && <p className="text-muted">{message}</p>}
       </div>
 
-      <div className="card p-4">
-        <h5 className="mb-3">Recent Scans</h5>
+      <div className="card p-3">
+        <h5 className="mb-3">Recent Scans <span className="badge bg-secondary">{scanCount} last hour</span></h5>
         <ul className="list-group">
           {scanHistory.map(scan => (
-            <li key={scan.id} className="list-group-item">
+            <li key={scan.id} className="list-group-item py-2 px-2">
               <div className="fw-bold">{scan.code}</div>
               <small className="text-muted">{new Date(scan.timestamp).toLocaleString()}</small>
             </li>
