@@ -3,7 +3,6 @@ import { useEffect, useState } from 'react';
 import { supabase } from './lib/supabaseClient';
 import Header from './components/Header';
 import Footer from './components/Footer';
-import Sidebar from './components/Sidebar';
 import Login from './pages/Login';
 import QRScanner from './components/QRScanner';
 import Dashboard from './pages/Dashboard';
@@ -27,25 +26,17 @@ const App = () => {
     };
   }, []);
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    setUser(null);
-  };
-
   return (
     <Router>
       <Header user={user} />
-      <div className="d-flex">
-        {user && <Sidebar onLogout={handleLogout} />}
-        <main className="container mt-4 flex-grow-1">
-          <Routes>
-            <Route path="/login" element={user ? <Navigate to="/dashboard" /> : <Login />} />
-            <Route path="/dashboard" element={user ? <Dashboard /> : <Navigate to="/login" />} />
-            <Route path="/scanner" element={user ? <QRScanner /> : <Navigate to="/login" />} />
-            <Route path="*" element={<Navigate to={user ? "/dashboard" : "/login"} />} />
-          </Routes>
-        </main>
-      </div>
+      <main className="container mt-4">
+        <Routes>
+          <Route path="/login" element={user ? <Navigate to="/dashboard" /> : <Login />} />
+          <Route path="/dashboard" element={user ? <Dashboard /> : <Navigate to="/login" />} />
+          <Route path="/scanner" element={user ? <QRScanner /> : <Navigate to="/login" />} />
+          <Route path="*" element={<Navigate to={user ? "/dashboard" : "/login"} />} />
+        </Routes>
+      </main>
       <Footer />
     </Router>
   );
