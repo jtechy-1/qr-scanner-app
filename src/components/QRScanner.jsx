@@ -3,6 +3,7 @@ import { Html5Qrcode } from 'html5-qrcode';
 import { supabase } from '../lib/supabaseClient';
 
 const QRScanner = () => {
+  const [scannerHeight, setScannerHeight] = useState('300px');
   const [result, setResult] = useState('');
   const [message, setMessage] = useState('');
   const [isScanning, setIsScanning] = useState(false);
@@ -24,6 +25,12 @@ const QRScanner = () => {
 
   useEffect(() => {
     loadRecentScans();
+
+    const updateHeight = () => {
+      setScannerHeight(window.innerWidth > window.innerHeight ? '300px' : '200px');
+    };
+    updateHeight();
+    window.addEventListener('resize', updateHeight);
     setupIdleTimer();
     return () => {
       if (idleTimer.current) clearTimeout(idleTimer.current);
@@ -125,6 +132,7 @@ const QRScanner = () => {
   return (
     <div className="container mt-4">
       <div className="card p-4 mb-4">
+        <h3 className="text-primary mb-3">QR Scanner</h3>
         {!isScanning && (
           <button className="btn btn-success w-100 mb-2" onClick={startScanner}>
             Start Scan
@@ -138,7 +146,7 @@ const QRScanner = () => {
         <div
           id="reader"
           className="border border-secondary rounded my-3"
-          style={{ width: '100%', height: '200px' }}
+          style={{ width: '100%', maxWidth: '350px', height: scannerHeight }}
         />
         {result && <p className="text-success fw-bold">Scanned: {result}</p>}
         {message && <p className="text-muted">{message}</p>}
