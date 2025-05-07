@@ -27,7 +27,7 @@ const QRScanner = () => {
     loadRecentScans();
 
     const updateHeight = () => {
-      setScannerHeight(window.innerWidth > window.innerHeight ? '200px' : '200px');
+      setScannerHeight(window.innerWidth > window.innerHeight ? '300px' : '200px');
     };
     updateHeight();
     window.addEventListener('resize', updateHeight);
@@ -77,7 +77,7 @@ const QRScanner = () => {
 
       await html5QrCode.start(
         { facingMode: "environment" },
-        { fps: 15, qrbox: 200 },
+        { fps: 15, qrbox: 250 },
         async (decodedText) => {
           console.log("Detected QR:", decodedText);
           if (!isLocked.current) {
@@ -146,7 +146,7 @@ const QRScanner = () => {
         <div
           id="reader"
           className="border border-secondary rounded my-3"
-          style={{ width: '100%', maxWidth: '200px', height: scannerHeight }}
+          style={{ width: '100%', maxWidth: '350px', height: scannerHeight, maxHeight: '80vh', overflow: 'hidden', position: 'relative' }}
         />
         {result && <p className="text-success fw-bold">Scanned: {result}</p>}
         {message && <p className="text-muted">{message}</p>}
