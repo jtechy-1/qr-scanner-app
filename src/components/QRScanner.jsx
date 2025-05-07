@@ -70,7 +70,7 @@ const QRScanner = () => {
 
       await html5QrCode.start(
         { facingMode: "environment" },
-        { fps: 15, qrbox: 300 },
+        { fps: 15, qrbox: 250 },
         async (decodedText) => {
           console.log("Detected QR:", decodedText);
           if (!isLocked.current) {
@@ -138,7 +138,7 @@ const QRScanner = () => {
         <div
           id="reader"
           className="border border-secondary rounded my-3"
-          style={{ width: '100%', height: '250px' }}
+          style={{ width: '100%', height: '200px' }}
         />
         {result && <p className="text-success fw-bold">Scanned: {result}</p>}
         {message && <p className="text-muted">{message}</p>}
