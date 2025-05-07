@@ -125,7 +125,6 @@ const QRScanner = () => {
   return (
     <div className="container mt-4">
       <div className="card p-4 mb-4">
-        <h3 className="text-primary mb-3">QR Scanner</h3>
         {!isScanning && (
           <button className="btn btn-success w-100 mb-2" onClick={startScanner}>
             Start Scan
@@ -139,7 +138,7 @@ const QRScanner = () => {
         <div
           id="reader"
           className="border border-secondary rounded my-3"
-          style={{ width: '100%', height: '250px' }}
+          style={{ width: '100%', height: '400px' }}
         />
         {result && <p className="text-success fw-bold">Scanned: {result}</p>}
         {message && <p className="text-muted">{message}</p>}
