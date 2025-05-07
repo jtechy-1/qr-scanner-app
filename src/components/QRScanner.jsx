@@ -9,6 +9,7 @@ const QRScanner = () => {
   const [scanHistory, setScanHistory] = useState([]);
   const html5QrCodeRef = useRef(null);
   const isLocked = useRef(false);
+  const idleTimer = useRef(null);
 
   const loadRecentScans = async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -23,7 +24,35 @@ const QRScanner = () => {
 
   useEffect(() => {
     loadRecentScans();
+    setupIdleTimer();
+    return () => {
+      if (idleTimer.current) clearTimeout(idleTimer.current);
+      removeActivityListeners();
+    };
   }, []);
+
+  const setupIdleTimer = () => {
+    const resetTimer = () => {
+      if (idleTimer.current) clearTimeout(idleTimer.current);
+      idleTimer.current = setTimeout(() => {
+        handleLogout();
+      }, 30 * 60 * 1000); // 30 minutes
+    };
+
+    const events = ['mousemove', 'keydown', 'touchstart'];
+    events.forEach(event => window.addEventListener(event, resetTimer));
+    resetTimer();
+  };
+
+  const removeActivityListeners = () => {
+    const events = ['mousemove', 'keydown', 'touchstart'];
+    events.forEach(event => window.removeEventListener(event, setupIdleTimer));
+  };
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    window.location.href = '/login';
+  };
 
   const startScanner = async () => {
     if (html5QrCodeRef.current) {
@@ -38,7 +67,7 @@ const QRScanner = () => {
     try {
       await html5QrCode.start(
         { facingMode: "environment" },
-        { fps: 15, qrbox: { width: 300, height: 300 } },
+        { fps: 15, qrbox: 250 },
         async (decodedText) => {
           console.log("Detected QR:", decodedText);
           if (!isLocked.current) {
@@ -107,7 +136,7 @@ const QRScanner = () => {
         <div
           id="reader"
           className="border border-secondary rounded my-3"
-          style={{ width: '100%', height: '300px' }}
+          style={{ width: '100%', height: '250px' }}
         />
         {result && <p className="text-success fw-bold">Scanned: {result}</p>}
         {message && <p className="text-muted">{message}</p>}
