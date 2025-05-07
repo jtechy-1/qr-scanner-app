@@ -3,7 +3,7 @@ import { Html5Qrcode } from 'html5-qrcode';
 import { supabase } from '../lib/supabaseClient';
 
 const QRScanner = () => {
-  const [scannerHeight, setScannerHeight] = useState('300px');
+  const [scannerHeight, setScannerHeight] = useState('250px');
   const [result, setResult] = useState('');
   const [message, setMessage] = useState('');
   const [isScanning, setIsScanning] = useState(false);
