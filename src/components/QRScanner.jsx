@@ -27,7 +27,7 @@ const QRScanner = () => {
     loadRecentScans();
 
     const updateHeight = () => {
-      setScannerHeight(window.innerWidth > window.innerHeight ? '300px' : '200px');
+      setScannerHeight(window.innerWidth > window.innerHeight ? '200px' : '200px');
     };
     updateHeight();
     window.addEventListener('resize', updateHeight);
