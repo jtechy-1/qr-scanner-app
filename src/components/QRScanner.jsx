@@ -26,14 +26,21 @@ const QRScanner = () => {
   }, []);
 
   const startScanner = async () => {
+    if (html5QrCodeRef.current) {
+      await html5QrCodeRef.current.stop();
+      await html5QrCodeRef.current.clear();
+      html5QrCodeRef.current = null;
+    }
+
     const html5QrCode = new Html5Qrcode("reader");
     html5QrCodeRef.current = html5QrCode;
 
     try {
       await html5QrCode.start(
         { facingMode: "environment" },
-        { fps: 10, qrbox: 250 },
+        { fps: 15, qrbox: { width: 300, height: 300 } },
         async (decodedText) => {
+          console.log("Detected QR:", decodedText);
           if (!isLocked.current) {
             isLocked.current = true;
             setResult(decodedText);
@@ -51,11 +58,14 @@ const QRScanner = () => {
               await stopScanner();
               await loadRecentScans();
             } else {
+              console.error("Insert error:", error.message);
               setMessage('❌ ' + error.message);
             }
           }
         },
-        () => {}
+        (errorMessage) => {
+          // console.warn(errorMessage); // optional: log scan failures
+        }
       );
       setIsScanning(true);
     } catch (err) {
@@ -94,7 +104,11 @@ const QRScanner = () => {
             Stop Scan
           </button>
         )}
-        <div id="reader" className="my-3" style={{ width: '100%' }} />
+        <div
+          id="reader"
+          className="border border-secondary rounded my-3"
+          style={{ width: '100%', height: '300px' }}
+        />
         {result && <p className="text-success fw-bold">Scanned: {result}</p>}
         {message && <p className="text-muted">{message}</p>}
       </div>
