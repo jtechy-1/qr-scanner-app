@@ -31,7 +31,7 @@ const QRScanner = () => {
 
     try {
       await html5QrCode.start(
-        { facingMode: "environment" }, // ✅ Use back camera
+        { facingMode: "environment" },
         { fps: 10, qrbox: 250 },
         async (decodedText) => {
           if (!isLocked.current) {
@@ -57,7 +57,6 @@ const QRScanner = () => {
         },
         () => {}
       );
-
       setIsScanning(true);
     } catch (err) {
       setMessage("❌ Failed to start camera: " + err.message);
@@ -66,12 +65,19 @@ const QRScanner = () => {
 
   const stopScanner = async () => {
     if (html5QrCodeRef.current) {
-      await html5QrCodeRef.current.stop();
-      await html5QrCodeRef.current.clear();
+      try {
+        await html5QrCodeRef.current.stop();
+        await html5QrCodeRef.current.clear();
+      } catch (err) {
+        console.error("Error stopping scanner:", err);
+      }
       html5QrCodeRef.current = null;
-      setIsScanning(false);
-      isLocked.current = false;
     }
+
+    isLocked.current = false;
+    setIsScanning(false);
+    setResult('');
+    setMessage('🛑 Scanner stopped.');
   };
 
   return (
