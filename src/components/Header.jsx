@@ -1,62 +1,78 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { supabase } from '../lib/supabaseClient';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import { supabase } from './lib/supabaseClient';
+import Header from './components/Header';
+import Footer from './components/Footer';
+import Login from './pages/Login';
+import QRScanner from './components/QRScanner';
+import Dashboard from './pages/Dashboard';
+import AssignEmployees from './pages/AssignEmployees';
+import ManageLocations from './pages/ManageLocations';
 
-const Header = ({ user, role }) => {
-  const [menuOpen, setMenuOpen] = useState(false);
-  const navigate = useNavigate();
+const App = () => {
+  const [user, setUser] = useState(null);
+  const [role, setRole] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    navigate('/login');
-  };
+  useEffect(() => {
+    const fetchUserAndRole = async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      const user = session?.user || null;
+      setUser(user);
+
+      if (user) {
+        const { data, error } = await supabase
+          .from('employees')
+          .select('role')
+          .eq('id', user.id)
+          .single();
+
+        if (!error) {
+          setRole(data.role);
+        } else {
+          console.error('Failed to fetch role:', error.message);
+        }
+      }
+
+      setIsLoading(false);
+    };
+
+    fetchUserAndRole();
+
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user || null);
+      if (!session) setRole(null);
+    });
+
+    return () => {
+      listener.subscription.unsubscribe();
+    };
+  }, []);
+
+  if (isLoading || (user && role === null)) return <div className="text-center mt-5">🔄 Loading...</div>;
 
   return (
-    <nav className="navbar navbar-expand-lg navbar-dark bg-primary px-3">
-      <Link className="navbar-brand" to={role === 'admin' ? '/dashboard' : '/scanner'}>QR Scanner</Link>
-
-      <button
-        className="navbar-toggler"
-        type="button"
-        onClick={() => setMenuOpen(!menuOpen)}
-        aria-controls="navbarNav"
-        aria-expanded={menuOpen}
-        aria-label="Toggle navigation"
-      >
-        <span className="navbar-toggler-icon"></span>
-      </button>
-
-      <div className={`collapse navbar-collapse ${menuOpen ? 'show' : ''}`} id="navbarNav">
-        <ul className="navbar-nav ms-auto">
-          {user && role === 'admin' && (
-            <>
-              <li className="nav-item">
-                <Link className="nav-link" to="/dashboard" onClick={() => setMenuOpen(false)}>Dashboard</Link>
-              </li>
-              <li className="nav-item">
-                <Link className="nav-link" to="/assign-employees" onClick={() => setMenuOpen(false)}>Assign Employees</Link>
-              </li>
-              <li className="nav-item">
-                <Link className="nav-link" to="/manage-locations" onClick={() => setMenuOpen(false)}>Manage Locations</Link>
-              </li>
-            </>
-          )}
-
-          {user && role === 'user' && (
-            <li className="nav-item">
-              <Link className="nav-link" to="/scanner" onClick={() => setMenuOpen(false)}>Scanner</Link>
-            </li>
-          )}
-
-          {user && (
-            <li className="nav-item">
-              <button className="btn btn-outline-light ms-lg-3 mt-2 mt-lg-0" onClick={handleLogout}>Logout</button>
-            </li>
-          )}
-        </ul>
-      </div>
-    </nav>
+    <Router>
+      <Header user={user} role={role} userName={user?.email || 'User'} />
+      <main className="container mt-4">
+        <Routes>
+          <Route path="/login" element={user ? <Navigate to={role === 'admin' ? '/dashboard' : '/scanner'} /> : <Login />} />
+          <Route path="/dashboard" element={user && role === 'admin' ? <Dashboard /> : <Navigate to="/login" />} />
+          <Route path="/assign-employees" element={user && role === 'admin' ? <AssignEmployees /> : <Navigate to="/login" />} />
+          <Route path="/manage-locations" element={user && role === 'admin' ? <ManageLocations /> : <Navigate to="/login" />} />
+          <Route path="/scanner" element={user ? <QRScanner /> : <Navigate to="/login" />} />
+          <Route path="*" element={<Navigate to={user ? (role === 'admin' ? '/dashboard' : '/scanner') : '/login'} />} />
+        </Routes>
+      </main>
+      <ToastContainer position="top-right" autoClose={3000} />
+      <Footer />
+    </Router>
   );
 };
 
-export default Header;
+export default App;
