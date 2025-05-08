@@ -65,7 +65,7 @@ const App = () => {
           <Route path="/dashboard" element={user && role === 'admin' ? <Dashboard /> : <Navigate to="/login" />} />
           <Route path="/assign-employees" element={user && role === 'admin' ? <AssignEmployees /> : <Navigate to="/login" />} />
           <Route path="/manage-locations" element={user && role === 'admin' ? <ManageLocations /> : <Navigate to="/login" />} />
-          <Route path="/scanner" element={user && role === 'user' ? <QRScanner /> : <Navigate to="/login" />} />
+          <Route path="/scanner" element={user ? <QRScanner /> : <Navigate to="/login" />} />
           <Route path="*" element={<Navigate to={user ? (role === 'admin' ? '/dashboard' : '/scanner') : '/login'} />} />
         </Routes>
       </main>
