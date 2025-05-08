@@ -91,7 +91,7 @@ const QRScanner = () => {
 
       await html5QrCode.start(
         { facingMode: "environment" },
-        { fps: 15, qrbox: 250 },
+        { fps: 15, qrbox: 300 },
         async (decodedText) => {
           console.log("Detected QR:", decodedText);
           if (!isLocked.current) {

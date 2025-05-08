@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
 
-const Header = ({ user }) => {
+const Header = ({ user, role }) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const navigate = useNavigate();
 
@@ -13,7 +13,7 @@ const Header = ({ user }) => {
 
   return (
     <nav className="navbar navbar-expand-lg navbar-dark bg-primary px-3">
-      <Link className="navbar-brand" to="/dashboard">QR Scanner</Link>
+      <Link className="navbar-brand" to={role === 'admin' ? "/dashboard" : "/scanner"}>QR Scanner</Link>
 
       <button
         className="navbar-toggler"
@@ -28,23 +28,27 @@ const Header = ({ user }) => {
 
       <div className={`collapse navbar-collapse ${menuOpen ? 'show' : ''}`} id="navbarNav">
         <ul className="navbar-nav ms-auto">
-          {user ? (
+
+          {user && role === 'admin' && (
             <>
               <li className="nav-item">
                 <Link className="nav-link" to="/dashboard" onClick={() => setMenuOpen(false)}>Dashboard</Link>
               </li>
               <li className="nav-item">
-                <Link className="nav-link" to="/scanner" onClick={() => setMenuOpen(false)}>Scanner</Link>
-              </li>
-              <li className="nav-item">
-                <button className="btn btn-outline-light ms-lg-3 mt-2 mt-lg-0" onClick={handleLogout}>
-                  Logout
-                </button>
+                <Link className="nav-link" to="/assign-employees" onClick={() => setMenuOpen(false)}>Assign Employees</Link>
               </li>
             </>
-          ) : (
+          )}
+
+          {user && role === 'user' && (
             <li className="nav-item">
-              <Link className="nav-link" to="/login">Login</Link>
+              <Link className="nav-link" to="/scanner" onClick={() => setMenuOpen(false)}>Scanner</Link>
+            </li>
+          )}
+
+          {user && (
+            <li className="nav-item">
+              <button className="btn btn-outline-light ms-lg-3 mt-2 mt-lg-0" onClick={handleLogout}>Logout</button>
             </li>
           )}
         </ul>
