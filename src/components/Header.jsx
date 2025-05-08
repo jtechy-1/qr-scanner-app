@@ -2,7 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { useEffect, useState } from 'react';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { supabase } from './lib/supabaseClient';
+import { supabase } from '../lib/supabaseClient';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import Login from './pages/Login';
