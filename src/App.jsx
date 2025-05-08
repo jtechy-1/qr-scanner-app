@@ -11,6 +11,7 @@ import AssignEmployees from './pages/AssignEmployees';
 const App = () => {
   const [user, setUser] = useState(null);
   const [role, setRole] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchUserAndRole = async () => {
@@ -34,19 +35,29 @@ const App = () => {
           console.error('Failed to fetch role:', error.message);
         }
       }
+
+      setIsLoading(false);
     };
 
     fetchUserAndRole();
 
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user || null);
-      setRole(session ? null : null); // reset role if signed out
+      if (!session) setRole(null);
     });
 
     return () => {
       listener.subscription.unsubscribe();
     };
   }, []);
+
+  if (isLoading) {
+    return (
+      <div className="text-center mt-5">
+        🔄 Loading...
+      </div>
+    );
+  }
 
   return (
     <Router>
