@@ -31,7 +31,8 @@ const ManageLocations = () => {
       fetchLocations();
       setShowForm(false);
     } else {
-      setMessage(`❌ ${error.message}`);
+                            console.error('❌ Supabase delete error:', error.message);
+                            setMessage(`❌ ${error.message}`);
     }
   };
 
@@ -248,12 +249,16 @@ const ManageLocations = () => {
                       className="btn btn-sm btn-danger"
                       onClick={async () => {
                         const confirmDelete = prompt('Are you sure you want to delete this QR code? Type YES to confirm.');
+                        console.log('User typed:', confirmDelete);
+                        if (confirmDelete === 'YES') {
+                          console.log('Attempting to delete QR code ID:', qr.id);
                         if (confirmDelete === 'YES') {
                           const { error } = await supabase
                             .from('qr_codes')
                             .delete()
                             .eq('id', qr.id);
                           if (!error) {
+                            console.log('✅ QR Code deleted successfully');
                             setQrList(prev => prev.filter(item => item.id !== qr.id));
                             setMessage('✅ QR Code deleted');
                           } else {
