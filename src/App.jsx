@@ -54,7 +54,9 @@ const App = () => {
     };
   }, []);
 
-  if (isLoading) return <div className="text-center mt-5">🔄 Loading...</div>;
+  if (isLoading || (user && role === null)) {
+    return <div className="text-center mt-5">🔄 Loading...</div>;
+  }
 
   return (
     <Router>
@@ -62,7 +64,7 @@ const App = () => {
       <main className="container mt-4">
         <Routes>
           <Route path="/login" element={user ? <Navigate to={role === 'admin' ? '/dashboard' : '/scanner'} /> : <Login />} />
-          <Route path="/dashboard" element={user && role === 'admin' ? <Dashboard /> : <Navigate to="/login" />} />
+          <Route path="/dashboard" element={user ? <Dashboard /> : <Navigate to="/login" />} />
           <Route path="/assign-employees" element={user && role === 'admin' ? <AssignEmployees /> : <Navigate to="/login" />} />
           <Route path="/manage-locations" element={user && role === 'admin' ? <ManageLocations /> : <Navigate to="/login" />} />
           <Route path="/scanner" element={user ? <QRScanner /> : <Navigate to="/login" />} />
