@@ -42,12 +42,11 @@ const Header = ({ user, role }) => {
             </>
           )}
 
-          {user && role === 'user' && (
+          {user && (role === 'user' || role === 'admin') && (
             <li className="nav-item">
               <Link className="nav-link" to="/scanner" onClick={() => setMenuOpen(false)}>Scanner</Link>
             </li>
           )}
-
           {user && (
             <li className="nav-item">
               <button className="btn btn-outline-light ms-lg-3 mt-2 mt-lg-0" onClick={handleLogout}>Logout</button>
