@@ -32,13 +32,17 @@ const Header = ({ user, role }) => {
           {user && role === 'admin' && (
             <>
               <li className="nav-item">
-                <Link className="nav-link" to="/dashboard" onClick={() => setMenuOpen(false)}>Dashboard</Link>
+                <Link className="nav-link" to="/dashboard">Dashboard</Link>
               </li>
               <li className="nav-item">
-                <Link className="nav-link" to="/assign-employees" onClick={() => setMenuOpen(false)}>Assign Employees</Link>
+                <Link className="nav-link" to="/assign-employees">Assign Employees</Link>
+              </li>
+              <li className="nav-item">
+                <Link className="nav-link" to="/manage-locations">Manage Locations</Link>
               </li>
             </>
           )}
+
 
           {user && role === 'user' && (
             <li className="nav-item">
