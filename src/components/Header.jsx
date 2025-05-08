@@ -3,7 +3,6 @@ import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
 
 const Header = ({ user, role }) => {
-  if (user && role === null) return null;
   const [menuOpen, setMenuOpen] = useState(false);
   const navigate = useNavigate();
 

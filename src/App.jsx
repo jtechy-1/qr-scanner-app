@@ -29,7 +29,7 @@ const App = () => {
         const { data, error } = await supabase
           .from('employees')
           .select('role')
-          .eq('id', user.id)
+          .eq('user_id', user.id) // updated from 'id' to 'user_id'
           .single();
 
         if (!error) {
@@ -54,30 +54,19 @@ const App = () => {
     };
   }, []);
 
-  if (isLoading || (user && role === null)) {
-    return <div className="text-center mt-5">🔄 Loading...</div>;
-  }
+  if (isLoading) return <div className="text-center mt-5">🔄 Loading...</div>;
 
   return (
     <Router>
-      
-      <header className="bg-primary text-white py-2 px-3 d-flex justify-content-between align-items-center">
-        <h5 className="m-0">QR Scanner</h5>
-        {user && (
-          <Link to={role === 'admin' ? '/dashboard' : '/scanner'} className="btn btn-sm btn-light">
-            Dashboard
-          </Link>
-        )}
-      </header>
-
+      <Header user={user} role={role} />
       <main className="container mt-4">
         <Routes>
-          <Route path="/login" element={user ? <Navigate to={role === 'admin' ? '/dashboard' : '/scanner'} /> : <Login />} />
+          <Route path="/login" element={user ? <Navigate to="/dashboard" /> : <Login />} />
           <Route path="/dashboard" element={user ? <Dashboard /> : <Navigate to="/login" />} />
           <Route path="/assign-employees" element={user && role === 'admin' ? <AssignEmployees /> : <Navigate to="/login" />} />
           <Route path="/manage-locations" element={user && role === 'admin' ? <ManageLocations /> : <Navigate to="/login" />} />
           <Route path="/scanner" element={user ? <QRScanner /> : <Navigate to="/login" />} />
-          <Route path="*" element={<Navigate to={user ? (role === 'admin' ? '/dashboard' : '/scanner') : '/login'} />} />
+          <Route path="*" element={<Navigate to={user ? "/dashboard" : "/login"} />} />
         </Routes>
       </main>
       <ToastContainer position="top-right" autoClose={3000} />
