@@ -95,6 +95,25 @@ const ManageLocations = () => {
           >
             Delete QR Code
           </button>
+        <button
+            type="button"
+            className="btn btn-outline-secondary mt-2"
+            onClick={async () => {
+              const { data, error } = await supabase
+                .from('qr_codes')
+                .select('*')
+                .eq('location_id', selectedLocationId);
+              if (!error && data.length > 0) {
+                alert('QR Codes:
+' + data.map(code => `${code.label} → ${code.code_value}`).join('
+'));
+              } else {
+                alert('No QR codes found or failed to load.');
+              }
+            }}
+          >
+            View Existing QR Codes
+          </button>
         </form>
       )}
 

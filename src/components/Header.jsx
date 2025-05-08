@@ -13,7 +13,7 @@ const Header = ({ user, role }) => {
 
   return (
     <nav className="navbar navbar-expand-lg navbar-dark bg-primary px-3">
-      <Link className="navbar-brand" to={role === 'admin' ? "/dashboard" : "/scanner"}>QR Scanner</Link>
+      <Link className="navbar-brand" to={role === 'admin' ? '/dashboard' : '/scanner'}>QR Scanner</Link>
 
       <button
         className="navbar-toggler"
@@ -28,21 +28,19 @@ const Header = ({ user, role }) => {
 
       <div className={`collapse navbar-collapse ${menuOpen ? 'show' : ''}`} id="navbarNav">
         <ul className="navbar-nav ms-auto">
-
           {user && role === 'admin' && (
             <>
               <li className="nav-item">
-                <Link className="nav-link" to="/dashboard">Dashboard</Link>
+                <Link className="nav-link" to="/dashboard" onClick={() => setMenuOpen(false)}>Dashboard</Link>
               </li>
               <li className="nav-item">
-                <Link className="nav-link" to="/assign-employees">Assign Employees</Link>
+                <Link className="nav-link" to="/assign-employees" onClick={() => setMenuOpen(false)}>Assign Employees</Link>
               </li>
               <li className="nav-item">
-                <Link className="nav-link" to="/manage-locations">Manage Locations</Link>
+                <Link className="nav-link" to="/manage-locations" onClick={() => setMenuOpen(false)}>Manage Locations</Link>
               </li>
             </>
           )}
-
 
           {user && role === 'user' && (
             <li className="nav-item">

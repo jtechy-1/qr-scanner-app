@@ -6,8 +6,8 @@ import Footer from './components/Footer';
 import Login from './pages/Login';
 import QRScanner from './components/QRScanner';
 import Dashboard from './pages/Dashboard';
-import ManageLocations from './pages/ManageLocations';
 import AssignEmployees from './pages/AssignEmployees';
+import ManageLocations from './pages/ManageLocations'; // ✅ new import
 
 const App = () => {
   const [user, setUser] = useState(null);
@@ -53,11 +53,7 @@ const App = () => {
   }, []);
 
   if (isLoading) {
-    return (
-      <div className="text-center mt-5">
-        🔄 Loading...
-      </div>
-    );
+    return <div className="text-center mt-5">🔄 Loading...</div>;
   }
 
   return (
@@ -67,8 +63,8 @@ const App = () => {
         <Routes>
           <Route path="/login" element={user ? <Navigate to={role === 'admin' ? '/dashboard' : '/scanner'} /> : <Login />} />
           <Route path="/dashboard" element={user && role === 'admin' ? <Dashboard /> : <Navigate to="/login" />} />
-          <Route path="/manage-locations" element={user && role === 'admin' ? <ManageLocations /> : <Navigate to="/login" />}/>
           <Route path="/assign-employees" element={user && role === 'admin' ? <AssignEmployees /> : <Navigate to="/login" />} />
+          <Route path="/manage-locations" element={user && role === 'admin' ? <ManageLocations /> : <Navigate to="/login" />} /> {/* ✅ new route */}
           <Route path="/scanner" element={user && role === 'user' ? <QRScanner /> : <Navigate to="/login" />} />
           <Route path="*" element={<Navigate to={user ? (role === 'admin' ? '/dashboard' : '/scanner') : '/login'} />} />
         </Routes>
