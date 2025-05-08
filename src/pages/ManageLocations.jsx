@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react';
+import { toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import { supabase } from '../lib/supabaseClient';
 
 const ManageLocations = () => {
@@ -8,7 +10,6 @@ const ManageLocations = () => {
   const [selectedLocationId, setSelectedLocationId] = useState(null);
   const [qrLabel, setQrLabel] = useState('');
   const [qrValue, setQrValue] = useState('');
-  const [message, setMessage] = useState('');
   const [qrList, setQrList] = useState([]);
   const [selectedQrCodes, setSelectedQrCodes] = useState([]);
 
@@ -26,20 +27,19 @@ const ManageLocations = () => {
     if (!newLocation.trim()) return;
     const { error } = await supabase.from('locations').insert({ name: newLocation });
     if (!error) {
-      setMessage('✅ Location added');
+      toast.success('✅ Location added');
       setNewLocation('');
       fetchLocations();
       setShowForm(false);
     } else {
-                            console.error('❌ Supabase delete error:', error.message);
-                            setMessage(`❌ ${error.message}`);
+      toast.error(`❌ ${error.message}`);
     }
   };
 
   const handleAddQRCode = async (e) => {
     e.preventDefault();
     if (!selectedLocationId || !qrLabel || !qrValue) {
-      setMessage('⚠️ Please fill all QR fields.');
+      toast.warning('⚠️ Please fill all QR fields.');
       return;
     }
 
@@ -60,7 +60,7 @@ const ManageLocations = () => {
         .maybeSingle();
 
       if (duplicateLabel) {
-        setMessage('⚠️ Label must be unique for each location.');
+        toast.warning('⚠️ Label must be unique for each location.');
         return;
       }
 
@@ -70,7 +70,7 @@ const ManageLocations = () => {
         .eq('id', existingCode.id);
 
       if (!updateError) {
-        setMessage('✅ QR Code updated');
+        toast.success('✅ QR Code updated');
         setQrLabel('');
         setQrValue('');
         const { data: updatedQrList } = await supabase
@@ -80,7 +80,7 @@ const ManageLocations = () => {
         setQrList(updatedQrList || []);
         return;
       } else {
-        setMessage(`❌ ${updateError.message}`);
+        toast.error(`❌ ${updateError.message}`);
         return;
       }
     }
@@ -93,7 +93,7 @@ const ManageLocations = () => {
       .maybeSingle();
 
     if (duplicate) {
-      setMessage('⚠️ Label must be unique for each location.');
+      toast.warning('⚠️ Label must be unique for each location.');
       return;
     }
 
@@ -103,7 +103,7 @@ const ManageLocations = () => {
       code_value: qrValue,
     });
     if (!error) {
-      setMessage('✅ QR Code added');
+      toast.success('✅ QR Code added');
       setQrLabel('');
       setQrValue('');
       const { data: updatedQrList } = await supabase
@@ -112,7 +112,7 @@ const ManageLocations = () => {
         .eq('location_id', selectedLocationId);
       setQrList(updatedQrList || []);
     } else {
-      setMessage(`❌ ${error.message}`);
+      toast.error(`❌ ${error.message}`);
     }
   };
 
@@ -142,8 +142,6 @@ const ManageLocations = () => {
         <thead>
           <tr>
             <th>Name</th>
-            <th>Address</th>
-            <th>Status</th>
             <th>Actions</th>
           </tr>
         </thead>
@@ -151,11 +149,9 @@ const ManageLocations = () => {
           {locations.map((loc) => (
             <tr key={loc.id}>
               <td>{loc.name}</td>
-              <td>{loc.address || '-'}</td>
-              <td>{loc.status}</td>
               <td>
                 <button
-                  className="btn btn-sm btn-secondary me-2"
+                  className="btn btn-sm btn-secondary"
                   onClick={async () => {
                     setSelectedLocationId(loc.id);
                     const { data: qrData } = await supabase
@@ -197,8 +193,6 @@ const ManageLocations = () => {
           <button className="btn btn-success">Save QR Code</button>
         </form>
       )}
-
-      {message && <div className="alert alert-info mt-3">{message}</div>}
 
       {qrList.length > 0 && (
         <div className="card p-3 mt-3">
@@ -248,22 +242,16 @@ const ManageLocations = () => {
                     <button
                       className="btn btn-sm btn-danger"
                       onClick={async () => {
-                        const confirmDelete = prompt('Are you sure you want to delete this QR code? Type YES to confirm.');
-                        console.log('User typed:', confirmDelete);
-                        if (confirmDelete === 'YES') {
-                          console.log('Attempting to delete QR code ID:', qr.id);
-                        if (confirmDelete === 'YES') {
-                          const { error } = await supabase
-                            .from('qr_codes')
-                            .delete()
-                            .eq('id', qr.id);
-                          if (!error) {
-                            console.log('✅ QR Code deleted successfully');
-                            setQrList(prev => prev.filter(item => item.id !== qr.id));
-                            setMessage('✅ QR Code deleted');
-                          } else {
-                            setMessage(`❌ ${error.message}`);
-                          }
+                        toast.info('Hold on! Deleting QR code...');
+                        const { error } = await supabase
+                          .from('qr_codes')
+                          .delete()
+                          .eq('id', qr.id);
+                        if (!error) {
+                          toast.success('✅ QR Code deleted');
+                          setQrList(prev => prev.filter(item => item.id !== qr.id));
+                        } else {
+                          toast.error(`❌ ${error.message}`);
                         }
                       }}
                     >

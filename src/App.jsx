@@ -1,5 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import { supabase } from './lib/supabaseClient';
 import Header from './components/Header';
 import Footer from './components/Footer';
@@ -7,7 +9,7 @@ import Login from './pages/Login';
 import QRScanner from './components/QRScanner';
 import Dashboard from './pages/Dashboard';
 import AssignEmployees from './pages/AssignEmployees';
-import ManageLocations from './pages/ManageLocations'; // ✅ new import
+import ManageLocations from './pages/ManageLocations';
 
 const App = () => {
   const [user, setUser] = useState(null);
@@ -52,9 +54,7 @@ const App = () => {
     };
   }, []);
 
-  if (isLoading) {
-    return <div className="text-center mt-5">🔄 Loading...</div>;
-  }
+  if (isLoading) return <div className="text-center mt-5">🔄 Loading...</div>;
 
   return (
     <Router>
@@ -64,11 +64,12 @@ const App = () => {
           <Route path="/login" element={user ? <Navigate to={role === 'admin' ? '/dashboard' : '/scanner'} /> : <Login />} />
           <Route path="/dashboard" element={user && role === 'admin' ? <Dashboard /> : <Navigate to="/login" />} />
           <Route path="/assign-employees" element={user && role === 'admin' ? <AssignEmployees /> : <Navigate to="/login" />} />
-          <Route path="/manage-locations" element={user && role === 'admin' ? <ManageLocations /> : <Navigate to="/login" />} /> {/* ✅ new route */}
+          <Route path="/manage-locations" element={user && role === 'admin' ? <ManageLocations /> : <Navigate to="/login" />} />
           <Route path="/scanner" element={user && role === 'user' ? <QRScanner /> : <Navigate to="/login" />} />
           <Route path="*" element={<Navigate to={user ? (role === 'admin' ? '/dashboard' : '/scanner') : '/login'} />} />
         </Routes>
       </main>
+      <ToastContainer position="top-right" autoClose={3000} />
       <Footer />
     </Router>
   );
