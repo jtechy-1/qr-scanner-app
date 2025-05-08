@@ -60,7 +60,16 @@ const App = () => {
 
   return (
     <Router>
-      <Header user={user} role={role} />
+      
+      <header className="bg-primary text-white py-2 px-3 d-flex justify-content-between align-items-center">
+        <h5 className="m-0">QR Scanner</h5>
+        {user && (
+          <Link to={role === 'admin' ? '/dashboard' : '/scanner'} className="btn btn-sm btn-light">
+            Dashboard
+          </Link>
+        )}
+      </header>
+
       <main className="container mt-4">
         <Routes>
           <Route path="/login" element={user ? <Navigate to={role === 'admin' ? '/dashboard' : '/scanner'} /> : <Login />} />
