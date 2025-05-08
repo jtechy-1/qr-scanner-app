@@ -6,7 +6,7 @@ import Footer from './components/Footer';
 import Login from './pages/Login';
 import QRScanner from './components/QRScanner';
 import Dashboard from './pages/Dashboard';
-import AssignEmployees from './pages/AssignEmployees'; // ✅ new import
+import AssignEmployees from './pages/AssignEmployees';
 
 const App = () => {
   const [user, setUser] = useState(null);
@@ -14,8 +14,12 @@ const App = () => {
 
   useEffect(() => {
     const fetchUserAndRole = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      setUser(user || null);
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      const user = session?.user || null;
+      setUser(user);
 
       if (user) {
         const { data, error } = await supabase
@@ -24,7 +28,11 @@ const App = () => {
           .eq('id', user.id)
           .single();
 
-        if (!error) setRole(data.role);
+        if (!error) {
+          setRole(data.role);
+        } else {
+          console.error('Failed to fetch role:', error.message);
+        }
       }
     };
 
@@ -32,7 +40,7 @@ const App = () => {
 
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user || null);
-      if (!session) setRole(null);
+      setRole(session ? null : null); // reset role if signed out
     });
 
     return () => {
