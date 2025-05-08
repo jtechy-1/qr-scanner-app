@@ -9,6 +9,8 @@ const ManageLocations = () => {
   const [qrLabel, setQrLabel] = useState('');
   const [qrValue, setQrValue] = useState('');
   const [message, setMessage] = useState('');
+  const [qrList, setQrList] = useState([]);
+  const [selectedQrCodes, setSelectedQrCodes] = useState([]);
 
   useEffect(() => {
     fetchLocations();
@@ -39,6 +41,61 @@ const ManageLocations = () => {
       setMessage('⚠️ Please fill all QR fields.');
       return;
     }
+
+    const { data: existingCode } = await supabase
+      .from('qr_codes')
+      .select('*')
+      .eq('location_id', selectedLocationId)
+      .eq('code_value', qrValue)
+      .maybeSingle();
+
+    if (existingCode) {
+      const { data: duplicateLabel } = await supabase
+        .from('qr_codes')
+        .select('*')
+        .eq('location_id', selectedLocationId)
+        .eq('label', qrLabel)
+        .neq('id', existingCode.id)
+        .maybeSingle();
+
+      if (duplicateLabel) {
+        setMessage('⚠️ Label must be unique for each location.');
+        return;
+      }
+
+      const { error: updateError } = await supabase
+        .from('qr_codes')
+        .update({ label: qrLabel })
+        .eq('id', existingCode.id);
+
+      if (!updateError) {
+        setMessage('✅ QR Code updated');
+        setQrLabel('');
+        setQrValue('');
+        const { data: updatedQrList } = await supabase
+          .from('qr_codes')
+          .select('*')
+          .eq('location_id', selectedLocationId);
+        setQrList(updatedQrList || []);
+        return;
+      } else {
+        setMessage(`❌ ${updateError.message}`);
+        return;
+      }
+    }
+
+    const { data: duplicate } = await supabase
+      .from('qr_codes')
+      .select('*')
+      .eq('location_id', selectedLocationId)
+      .eq('label', qrLabel)
+      .maybeSingle();
+
+    if (duplicate) {
+      setMessage('⚠️ Label must be unique for each location.');
+      return;
+    }
+
     const { error } = await supabase.from('qr_codes').insert({
       location_id: selectedLocationId,
       label: qrLabel,
@@ -48,6 +105,11 @@ const ManageLocations = () => {
       setMessage('✅ QR Code added');
       setQrLabel('');
       setQrValue('');
+      const { data: updatedQrList } = await supabase
+        .from('qr_codes')
+        .select('*')
+        .eq('location_id', selectedLocationId);
+      setQrList(updatedQrList || []);
     } else {
       setMessage(`❌ ${error.message}`);
     }
@@ -72,48 +134,6 @@ const ManageLocations = () => {
             onChange={(e) => setNewLocation(e.target.value)}
           />
           <button className="btn btn-primary">Add Location</button>
-        <button
-            type="button"
-            className="btn btn-danger mt-2"
-            onClick={async () => {
-              const confirm = prompt('Are you sure you want to delete this QR code? Type YES to confirm.');
-              if (confirm === 'YES') {
-                const { error } = await supabase
-                  .from('qr_codes')
-                  .delete()
-                  .eq('location_id', selectedLocationId)
-                  .eq('code_value', qrValue);
-                if (!error) {
-                  setMessage('✅ QR Code deleted');
-                  setQrLabel('');
-                  setQrValue('');
-                } else {
-                  setMessage(`❌ ${error.message}`);
-                }
-              }
-            }}
-          >
-            Delete QR Code
-          </button>
-        <button
-            type="button"
-            className="btn btn-outline-secondary mt-2"
-            onClick={async () => {
-              const { data, error } = await supabase
-                .from('qr_codes')
-                .select('*')
-                .eq('location_id', selectedLocationId);
-              if (!error && data.length > 0) {
-                alert('QR Codes:
-' + data.map(code => `${code.label} → ${code.code_value}`).join('
-'));
-              } else {
-                alert('No QR codes found or failed to load.');
-              }
-            }}
-          >
-            View Existing QR Codes
-          </button>
         </form>
       )}
 
@@ -135,9 +155,15 @@ const ManageLocations = () => {
               <td>
                 <button
                   className="btn btn-sm btn-secondary me-2"
-                  onClick={() => {
+                  onClick={async () => {
                     setSelectedLocationId(loc.id);
-                    setShowForm(false);
+                    const { data: qrData } = await supabase
+                      .from('qr_codes')
+                      .select('*')
+                      .eq('location_id', loc.id);
+                    setQrList(qrData || []);
+                    setQrLabel('');
+                    setQrValue('');
                   }}
                 >
                   Edit / QR Codes
@@ -150,7 +176,7 @@ const ManageLocations = () => {
 
       {selectedLocationId && (
         <form onSubmit={handleAddQRCode} className="card p-3 mt-4">
-          <h5>Add QR Code to Location</h5>
+          <h5>Add or Edit QR Code</h5>
           <input
             type="text"
             className="form-control mb-2"
@@ -167,11 +193,102 @@ const ManageLocations = () => {
             onChange={(e) => setQrValue(e.target.value)}
           />
 
-          <button className="btn btn-success">Add QR Code</button>
+          <button className="btn btn-success">Save QR Code</button>
         </form>
       )}
 
       {message && <div className="alert alert-info mt-3">{message}</div>}
+
+      {qrList.length > 0 && (
+        <div className="card p-3 mt-3">
+          <h5>QR Codes for Selected Location</h5>
+          <table className="table table-striped">
+            <thead>
+              <tr>
+                <th>Label</th>
+                <th>Value</th>
+                <th>QR Image</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {qrList.map(qr => (
+                <tr key={qr.id}>
+                  <td>
+                    <input
+                      type="checkbox"
+                      checked={selectedQrCodes.includes(qr.id)}
+                      onChange={() => {
+                        setSelectedQrCodes(prev =>
+                          prev.includes(qr.id)
+                            ? prev.filter(id => id !== qr.id)
+                            : [...prev, qr.id]
+                        );
+                      }}
+                    /> {qr.label}
+                  </td>
+                  <td>{qr.code_value}</td>
+                  <td>
+                    <img
+                      src={`https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(qr.code_value)}`}
+                      alt={qr.label}
+                    />
+                  </td>
+                  <td>
+                    <button
+                      className="btn btn-sm btn-warning me-2"
+                      onClick={() => {
+                        setQrLabel(qr.label);
+                        setQrValue(qr.code_value);
+                      }}
+                    >
+                      Edit
+                    </button>
+                    <button
+                      className="btn btn-sm btn-danger"
+                      onClick={async () => {
+                        const confirmDelete = prompt('Are you sure you want to delete this QR code? Type YES to confirm.');
+                        if (confirmDelete === 'YES') {
+                          const { error } = await supabase
+                            .from('qr_codes')
+                            .delete()
+                            .eq('id', qr.id);
+                          if (!error) {
+                            setQrList(prev => prev.filter(item => item.id !== qr.id));
+                            setMessage('✅ QR Code deleted');
+                          } else {
+                            setMessage(`❌ ${error.message}`);
+                          }
+                        }
+                      }}
+                    >
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <button
+            className="btn btn-outline-primary mt-3"
+            onClick={() => {
+              const selected = qrList.filter(qr => selectedQrCodes.includes(qr.id));
+              const win = window.open('', 'PRINT', 'height=600,width=800');
+              win.document.write('<html><head><title>Print QR Codes</title></head><body>');
+              selected.forEach(qr => {
+                win.document.write(`<div style='margin-bottom:20px;'><h4>${qr.label}</h4><img src='https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(qr.code_value)}' alt='${qr.label}' /></div>`);
+              });
+              win.document.write('</body></html>');
+              win.document.close();
+              win.focus();
+              win.print();
+              win.close();
+            }}
+          >
+            Print Selected
+          </button>
+        </div>
+      )}
     </div>
   );
 };
