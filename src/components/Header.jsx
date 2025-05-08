@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { supabase } from '../lib/supabaseClient';
-import Header from './components/Header';
+import Header from './Header';
 import Footer from './components/Footer';
 import Login from './pages/Login';
 import QRScanner from './components/QRScanner';
