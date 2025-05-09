@@ -62,11 +62,20 @@ const App = () => {
       <main className="container mt-4" style={{ maxWidth: '960px' }}>
         <Routes>
           <Route path="/login" element={user ? <Navigate to="/dashboard" /> : <Login />} />
-          <Route path="/dashboard" element={user ? <Dashboard /> : <Navigate to="/login" />} />
-          <Route path="/assign-employees" element={user && role === 'admin' ? <AssignEmployees /> : <Navigate to="/login" />} />
-          <Route path="/manage-locations" element={user && role === 'admin' ? <ManageLocations /> : <Navigate to="/login" />} />
-          <Route path="/scanner" element={user ? <QRScanner /> : <Navigate to="/login" />} />
-          <Route path="*" element={<Navigate to={user ? "/dashboard" : "/login"} />} />
+          {user && role && (
+            <>
+              <Route path="/dashboard" element={<Dashboard />} />
+              {role === 'admin' && (
+                <>
+                  <Route path="/assign-employees" element={<AssignEmployees />} />
+                  <Route path="/manage-locations" element={<ManageLocations />} />
+                </>
+              )}
+              <Route path="/scanner" element={<QRScanner />} />
+              <Route path="*" element={<Navigate to="/dashboard" />} />
+            </>
+          )}
+          {!user && <Route path="*" element={<Navigate to="/login" />} />}
         </Routes>
       </main>
       <ToastContainer position="top-right" autoClose={3000} />
