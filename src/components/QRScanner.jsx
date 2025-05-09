@@ -184,7 +184,7 @@ const QRScanner = () => {
         <ul className="list-group">
           {scanHistory.map(scan => (
             <li key={scan.id} className="list-group-item py-2 px-2">
-              <div className="fw-bold">{scan.qr_code?.label || 'Unknown Label'}</div>
+              <div className="fw-bold">{scan.qr_codes?.label || 'Unknown Label'}</div>
               <small className="text-muted">{new Date(scan.timestamp).toLocaleString()}</small>
             </li>
           ))}
