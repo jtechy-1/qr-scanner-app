@@ -9,6 +9,7 @@ import Login from './pages/Login';
 import QRScanner from './components/QRScanner';
 import Dashboard from './pages/Dashboard';
 import AssignEmployees from './pages/AssignEmployees';
+import ManageEmployees from './pages/ManageEmployees'
 import ManageLocations from './pages/ManageLocations';
 
 const App = () => {
@@ -68,6 +69,7 @@ const App = () => {
               {role === 'admin' && (
                 <>
                   <Route path="/assign-employees" element={<AssignEmployees />} />
+                  <Route path="/manage-employees" element={<ManageEmployees />} />
                   <Route path="/manage-locations" element={<ManageLocations />} />
                 </>
               )}

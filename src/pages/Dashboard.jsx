@@ -20,14 +20,14 @@ const Dashboard = () => {
     {
       role: ['admin', 'user'],
       icon: <FaUsers size={32} className="mb-2" />,
-      label: 'Employees',
-      link: '/employees',
+      label: 'Manage Employees',
+      link: '/manage-employees',
     },
     {
       role: ['admin'],
       icon: <FaUserShield size={32} className="mb-2" />,
-      label: 'Assign Roles',
-      link: '/assign-roles',
+      label: 'Assign employees',
+      link: '/assign-employees',
     },
     {
       role: ['admin', 'user'],
@@ -38,8 +38,8 @@ const Dashboard = () => {
     {
       role: ['admin'],
       icon: <FaUsersCog size={32} className="mb-2" />,
-      label: 'Manage Employees',
-      link: '/manage-employees',
+      label: 'Manage Locations',
+      link: '/manage-locations',
     }
   ];
 
