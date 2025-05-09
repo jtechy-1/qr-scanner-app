@@ -41,7 +41,7 @@ const QRScanner = () => {
     loadHourlyScanCount();
 
     const updateHeight = () => {
-      setScannerHeight(window.innerWidth > window.innerHeight ? '300px' : '200px');
+      setScannerHeight(window.innerWidth > window.innerHeight ? '300px' : '300px');
     };
     updateHeight();
     window.addEventListener('resize', updateHeight);
@@ -101,7 +101,7 @@ const QRScanner = () => {
 
             const { data: { user } } = await supabase.auth.getUser();
             const { data: codeMatch, error: lookupError } = await supabase
-              .from('qr_code')
+              .from('qr_codes')
               .select('id')
               .eq('code_value', decodedText)
               .single();
