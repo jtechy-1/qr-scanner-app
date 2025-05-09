@@ -1,81 +1,60 @@
+import { useNavigate } from 'react-router-dom';
+import { FaUsers, FaUserShield, FaQrcode, FaUsersCog } from 'react-icons/fa';
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-import * as React from 'react';
 import { supabase } from '../lib/supabaseClient';
-import { FaUsersCog, FaMapMarkedAlt, FaQrcode } from 'react-icons/fa';
 
 const Dashboard = () => {
-  const [role, setRole] = useState(null);
+  const [role, setRole] = useState('');
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchRole = async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-
-      const user = session?.user;
-      if (user) {
-        const { data, error } = await supabase
-          .from('employees')
-          .select('role')
-          .eq('id', user.id)
-          .single();
-
-        if (!error) {
-          setRole(data.role);
-        } else {
-          console.error('Error fetching role:', error.message);
-        }
-      }
+      const { data: { user } } = await supabase.auth.getUser();
+      const { data } = await supabase.from('employees').select('role').eq('id', user.id).single();
+      if (data) setRole(data.role);
     };
-
     fetchRole();
   }, []);
 
   const cards = [
     {
       role: ['admin', 'user'],
-      icon: <FaQrcode size={32} className="mb-2" />, // slightly smaller icon
-      label: 'Scanner',
+      icon: <FaUsers size={32} className="mb-2" />,
+      label: 'Employees',
+      link: '/employees',
+    },
+    {
+      role: ['admin'],
+      icon: <FaUserShield size={32} className="mb-2" />,
+      label: 'Assign Roles',
+      link: '/assign-roles',
+    },
+    {
+      role: ['admin', 'user'],
+      icon: <FaQrcode size={32} className="mb-2" />,
+      label: 'QR Scanner',
       link: '/scanner',
     },
     {
       role: ['admin'],
       icon: <FaUsersCog size={32} className="mb-2" />,
-      label: 'Assign Employees',
-      link: '/assign-employees',
-    },
-    {
-      role: ['admin'],
-      icon: <FaMapMarkedAlt size={32} className="mb-2" />,
-      label: 'Manage Locations',
-      link: '/manage-locations',
-    },
+      label: 'Manage Employees',
+      link: '/manage-employees',
+    }
   ];
 
-  if (!role) return <div className="text-center mt-5">🔄 Loading dashboard...</div>;
-
-  const visibleCards = cards.filter(card => role && card.role.includes(role));
-  const totalSlots = 12; // 4x3 grid
-  const allCards = [...visibleCards];
-  while (allCards.length < totalSlots) allCards.push(null);
-
   return (
-    <div>
-      
-      <div className="row row-cols-2 row-cols-sm-3 row-cols-md-4 g-2">
-        {allCards.map((card, index) => (
-          <div className="col" key={index}>
-            {card ? (
-              <Link to={card.link} className="text-decoration-none">
-                <div className="card text-center h-100 shadow-sm p-2">
-                  {card.icon}
-                  <h6 className="mt-2 text-dark small">{card.label}</h6>
-                </div>
-              </Link>
-            ) : (
-              <div className="card h-100 p-4 border-0 bg-light"></div>
-            )}
+    <div className="container mt-5">
+      <h2 className="text-center text-primary mb-4">Dashboard</h2>
+      <div className="row">
+        {cards.filter(card => card.role.includes(role)).map((card, index) => (
+          <div key={index} className="col-md-3 mb-4">
+            <div className="card text-center shadow-sm" role="button" onClick={() => navigate(card.link)}>
+              <div className="card-body">
+                {card.icon}
+                <h5 className="card-title">{card.label}</h5>
+              </div>
+            </div>
           </div>
         ))}
       </div>
