@@ -17,9 +17,6 @@ const ManageEmployees = () => {
   return (
     <div className="container mt-4">
       <h3 className="text-primary mb-3">Manage Employees</h3>
-      <div className="mb-3">
-        <a href="/dashboard" className="btn btn-outline-secondary">← Back to Dashboard</a>
-      </div>
       <div className="row mb-3">
         <div className="col-md-4">
           <input
@@ -50,9 +47,7 @@ const ManageEmployees = () => {
         <table className="table table-bordered">
           <thead className="table-light">
             <tr>
-              <th>ID</th>
-              <th>Full Name</th>
-              <th>Email</th>
+              <th>Name</th>
               <th>Role</th>
               <th>Status</th>
               <th>Actions</th>
@@ -61,9 +56,7 @@ const ManageEmployees = () => {
           <tbody>
             {employees.map(emp => (
               <tr key={emp.id}>
-                <td>{emp.id}</td>
-                <td>{emp.full_name}</td>
-                <td>{emp.email}</td>
+                <td>{emp.name}</td>
                 <td>{emp.role}</td>
                 <td>{emp.status}</td>
                 <td>

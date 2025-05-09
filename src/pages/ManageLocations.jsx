@@ -118,7 +118,7 @@ const ManageLocations = () => {
 
   return (
     <div className="container mt-4">
-      <h3 className="mb-4">Manage Locations & QR Codes</h3>
+      <h3 className="text-primary mb-3">Manage Locations & QR Codes</h3>
 
       <button className="btn btn-primary mb-3" onClick={() => setShowForm(!showForm)}>
         {showForm ? 'Cancel' : 'Add Location'}

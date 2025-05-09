@@ -8,9 +8,10 @@ import Footer from './components/Footer';
 import Login from './pages/Login';
 import QRScanner from './components/QRScanner';
 import Dashboard from './pages/Dashboard';
-import AssignEmployees from './pages/AssignEmployees';
-import ManageEmployees from './pages/ManageEmployees'
+import ManageEmployees from './pages/ManageEmployees';
 import ManageLocations from './pages/ManageLocations';
+import DailyActivityReport from './pages/DailyActivityReport';
+import ViewReports from './pages/ViewReports';
 
 const App = () => {
   const [user, setUser] = useState(null);
@@ -68,12 +69,13 @@ const App = () => {
               <Route path="/dashboard" element={<Dashboard />} />
               {role === 'admin' && (
                 <>
-                  <Route path="/assign-employees" element={<AssignEmployees />} />
-                  <Route path="/manage-employees" element={<ManageEmployees />} />
+                  <Route path="/manage_employees" element={<ManageEmployees />} />
                   <Route path="/manage-locations" element={<ManageLocations />} />
                 </>
               )}
               <Route path="/scanner" element={<QRScanner />} />
+              <Route path="/daily-report" element={<DailyActivityReport />} />
+              <Route path="/view-reports" element={<ViewReports />} />
               <Route path="*" element={<Navigate to="/dashboard" />} />
             </>
           )}
