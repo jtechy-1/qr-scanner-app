@@ -242,8 +242,7 @@ const ManageLocations = () => {
                     <button
                       className="btn btn-sm btn-danger"
                       onClick={async () => {
-                        const confirm = window.confirm('Are you sure you want to delete this QR code?');
-                        if (!confirm) return;
+                        toast.info('Hold on! Deleting QR code...');
                         const { error } = await supabase
                           .from('qr_codes')
                           .delete()
