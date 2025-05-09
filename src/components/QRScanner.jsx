@@ -17,7 +17,7 @@ const QRScanner = () => {
     const { data: { user } } = await supabase.auth.getUser();
     const { data } = await supabase
       .from('scans')
-      .select('*')
+      .select('id, timestamp, qr_code(label)')
       .eq('user_id', user.id)
       .order('timestamp', { ascending: false })
       .limit(5);
@@ -101,7 +101,7 @@ const QRScanner = () => {
 
             const { data: { user } } = await supabase.auth.getUser();
             const { data: codeMatch, error: lookupError } = await supabase
-              .from('qr_codes')
+              .from('qr_code')
               .select('id')
               .eq('code_value', decodedText)
               .single();
@@ -184,7 +184,7 @@ const QRScanner = () => {
         <ul className="list-group">
           {scanHistory.map(scan => (
             <li key={scan.id} className="list-group-item py-2 px-2">
-              <div className="fw-bold">{scan.code}</div>
+              <div className="fw-bold">{scan.qr_code?.label || 'Unknown Label'}</div>
               <small className="text-muted">{new Date(scan.timestamp).toLocaleString()}</small>
             </li>
           ))}
