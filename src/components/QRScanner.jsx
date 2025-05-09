@@ -17,7 +17,7 @@ const QRScanner = () => {
     const { data: { user } } = await supabase.auth.getUser();
     const { data } = await supabase
       .from('scans')
-      .select('id, timestamp, qr_code(label)')
+      .select('id, timestamp, qr_codes(label)')
       .eq('user_id', user.id)
       .order('timestamp', { ascending: false })
       .limit(5);
