@@ -101,7 +101,7 @@ const QRScanner = () => {
 
             const { data: { user } } = await supabase.auth.getUser();
             const { data: codeMatch, error: lookupError } = await supabase
-              .from('qr_code')
+              .from('qr_codes')
               .select('id')
               .eq('code_value', decodedText)
               .single();
