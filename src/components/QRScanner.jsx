@@ -100,8 +100,20 @@ const QRScanner = () => {
             new Audio('/beep.mp3').play();
 
             const { data: { user } } = await supabase.auth.getUser();
+            const { data: codeMatch, error: lookupError } = await supabase
+              .from('qr_code')
+              .select('id')
+              .eq('code_value', decodedText)
+              .single();
+
+            if (lookupError || !codeMatch) {
+              setMessage('❌ Code not recognized');
+              isLocked.current = false;
+              return;
+            }
+
             const { error } = await supabase.from('scans').insert({
-              code: decodedText,
+              code: codeMatch.id,
               timestamp: new Date().toISOString(),
               user_id: user.id
             });
