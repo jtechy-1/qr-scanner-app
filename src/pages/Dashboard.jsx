@@ -35,19 +35,19 @@ const Dashboard = () => {
   const cards = [
     {
       role: ['admin', 'user'],
-      icon: <FaQrcode size={40} className="mb-2" />,
+      icon: <FaQrcode size={32} className="mb-2" />, // slightly smaller icon
       label: 'Scanner',
       link: '/scanner',
     },
     {
       role: ['admin'],
-      icon: <FaUsersCog size={40} className="mb-2" />,
+      icon: <FaUsersCog size={32} className="mb-2" />,
       label: 'Assign Employees',
       link: '/assign-employees',
     },
     {
       role: ['admin'],
-      icon: <FaMapMarkedAlt size={40} className="mb-2" />,
+      icon: <FaMapMarkedAlt size={32} className="mb-2" />,
       label: 'Manage Locations',
       link: '/manage-locations',
     },
@@ -55,32 +55,29 @@ const Dashboard = () => {
 
   if (!role) return <div className="text-center mt-5">🔄 Loading dashboard...</div>;
 
+  const visibleCards = cards.filter(card => role && card.role.includes(role));
+  const totalSlots = 12; // 4x3 grid
+  const allCards = [...visibleCards];
+  while (allCards.length < totalSlots) allCards.push(null);
+
   return (
     <div>
-      <div className="text-end mb-3">
-        <button
-          className="btn btn-outline-danger btn-sm"
-          onClick={async () => {
-            await supabase.auth.signOut();
-            window.location.href = '/login';
-          }}
-        >
-          <i className="bi bi-box-arrow-right me-2"></i> Logout
-        </button>
-      </div>
-      <div className="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-4">
-        {cards
-          .filter(card => role && card.role.includes(role))
-          .map((card, index) => (
-            <div className="col" key={index}>
+      
+      <div className="row row-cols-2 row-cols-sm-3 row-cols-md-4 g-2">
+        {allCards.map((card, index) => (
+          <div className="col" key={index}>
+            {card ? (
               <Link to={card.link} className="text-decoration-none">
-                <div className="card text-center h-100 shadow-sm p-4">
+                <div className="card text-center h-100 shadow-sm p-2">
                   {card.icon}
-                  <h5 className="mt-2 text-dark">{card.label}</h5>
+                  <h6 className="mt-2 text-dark small">{card.label}</h6>
                 </div>
               </Link>
-            </div>
-          ))}
+            ) : (
+              <div className="card h-100 p-4 border-0 bg-light"></div>
+            )}
+          </div>
+        ))}
       </div>
     </div>
   );

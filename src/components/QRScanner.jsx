@@ -18,7 +18,7 @@ const QRScanner = () => {
     const { data } = await supabase
       .from('scans')
       .select('*')
-      .eq('user_id', user.id)
+      .eq('id', user.id)
       .order('timestamp', { ascending: false })
       .limit(5);
     setScanHistory(data || []);

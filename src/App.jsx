@@ -29,7 +29,7 @@ const App = () => {
         const { data, error } = await supabase
           .from('employees')
           .select('role')
-          .eq('user_id', user.id) // updated from 'id' to 'user_id'
+          .eq('id', user.id)
           .single();
 
         if (!error) {
@@ -59,7 +59,7 @@ const App = () => {
   return (
     <Router>
       <Header user={user} role={role} />
-      <main className="container mt-4">
+      <main className="container mt-4" style={{ maxWidth: '960px' }}>
         <Routes>
           <Route path="/login" element={user ? <Navigate to="/dashboard" /> : <Login />} />
           <Route path="/dashboard" element={user ? <Dashboard /> : <Navigate to="/login" />} />
