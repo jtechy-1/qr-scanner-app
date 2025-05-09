@@ -19,7 +19,7 @@ const Login = () => {
       setMessage('❌ ' + error.message);
     } else {
       setMessage('✅ Logged in! Redirecting...');
-      setTimeout(() => navigate('/dashboard'), 1000);
+      setTimeout(() => window.location.reload(), 500);
     }
   };
 
