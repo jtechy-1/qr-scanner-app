@@ -10,7 +10,7 @@ const DailyActivityReport = () => {
     date: '',
     start_time: '',
     end_time: '',
-    entries: [''],
+    entries: [{ time: '', note: '' }],
     photos: [],
     status: 'Draft',
   });
@@ -24,12 +24,12 @@ const DailyActivityReport = () => {
   }, []);
 
   const handleAddEntry = () => {
-    setReport(prev => ({ ...prev, entries: [...prev.entries, ''] }));
+    setReport(prev => ({ ...prev, entries: [...prev.entries, { time: '', note: '' }] }));
   };
 
-  const handleEntryChange = (index, value) => {
+  const handleEntryChange = (index, field, value) => {
     const newEntries = [...report.entries];
-    newEntries[index] = value;
+    newEntries[index][field] = value;
     setReport(prev => ({ ...prev, entries: newEntries }));
   };
 
@@ -50,6 +50,12 @@ const DailyActivityReport = () => {
       toast.warning('Please fill in all required fields.');
       return;
     }
+
+    const incompleteEntry = report.entries.some(entry => !entry.time || !entry.note);
+    if (incompleteEntry) {
+      toast.warning('Each entry must include a time and note.');
+      return;
+    }
     let uploadedUrls = [];
     for (const photo of report.photos) {
       const fileName = `${Date.now()}-${photo.name}`;
@@ -60,6 +66,7 @@ const DailyActivityReport = () => {
       }
     }
 
+    const submittedAt = report.status === 'Review' ? new Date().toISOString() : null;
     const { error: insertError } = await supabase.from('reports').insert({
       location_id: report.location_id,
       date: report.date,
@@ -68,6 +75,7 @@ const DailyActivityReport = () => {
       entries: report.entries,
       photos: uploadedUrls,
       status: report.status,
+      submitted_at: submittedAt,
       employee_id: userId,
     });
 
@@ -122,13 +130,41 @@ const DailyActivityReport = () => {
 
       <h5>Hourly Entries</h5>
       {report.entries.map((entry, i) => (
-        <div className="mb-2" key={i}>
-          <textarea
-            className="form-control"
-            placeholder={`Entry ${i + 1}`}
-            value={entry}
-            onChange={e => handleEntryChange(i, e.target.value)}
-          />
+        <div className="row mb-2" key={i}>
+          <div className="col-md-3">
+            <input
+              type="time"
+              className="form-control"
+              value={entry.time}
+              onChange={e => handleEntryChange(i, 'time', e.target.value)}
+            />
+          </div>
+          <div className="col-md-9">
+            <div className="input-group">
+              <textarea
+                className="form-control"
+                placeholder={`Entry ${i + 1}`}
+                value={entry.note}
+                onChange={e => handleEntryChange(i, 'note', e.target.value)}
+              />
+              <button
+                type="button"
+                className="btn btn-outline-danger"
+                onClick={() => {
+                  const newEntries = [...report.entries];
+                  if (report.entries.length > 1) {
+                    newEntries.splice(i, 1);
+                  } else {
+                    toast.warning('At least one entry is required.');
+                    return;
+                  }
+                  setReport(prev => ({ ...prev, entries: newEntries }));
+                }}
+              >
+                ✕
+              </button>
+            </div>
+          </div>
         </div>
       ))}
       <button className="btn btn-outline-primary mb-3" onClick={handleAddEntry}>Add Entry</button>
