@@ -13,9 +13,17 @@ const DailyActivityReport = () => {
     entries: [{ time: '', note: '' }],
     photos: [],
     status: 'Draft',
+    report_number: ''
   });
-
   useEffect(() => {
+    const generateReportNumber = async () => {
+      const { count } = await supabase.from('reports').select('id', { count: 'exact', head: true });
+      const next = (count || 0) + 1;
+      const reportNum = `RPT-${next.toString().padStart(5, '0')}`;
+      setReport(prev => ({ ...prev, report_number: reportNum }));
+    };
+    generateReportNumber();
+
     const fetchLocations = async () => {
       const { data } = await supabase.from('locations').select('id, name');
       if (data) setLocations(data);
@@ -38,7 +46,7 @@ const DailyActivityReport = () => {
   };
 
   const handleSubmit = async () => {
-    const { data: session } = await supabase.auth.getSession();
+        const { data: session } = await supabase.auth.getSession();
     const userId = session?.session?.user?.id;
 
     if (!userId) {
@@ -74,6 +82,7 @@ const DailyActivityReport = () => {
       end_time: report.end_time,
       entries: report.entries,
       photos: uploadedUrls,
+      report_number: report.report_number,
       status: report.status,
       submitted_at: submittedAt,
       employee_id: userId,
@@ -86,9 +95,10 @@ const DailyActivityReport = () => {
         date: '',
         start_time: '',
         end_time: '',
-        entries: [''],
+        entries: [{ time: '', note: '' }],
         photos: [],
         status: 'Draft',
+        report_number: '',
       });
       setTimeout(() => {
         window.location.href = '/view-reports';
@@ -101,6 +111,7 @@ const DailyActivityReport = () => {
   return (
     <div className="container mt-4">
       <h3 className="text-primary mb-3">Daily Activity Report</h3>
+      {report.report_number && <div className="mb-3"><strong>Report #: </strong>{report.report_number}</div>}
 
       <div className="mb-3">
         <label className="form-label">Location</label>

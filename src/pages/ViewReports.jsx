@@ -25,22 +25,24 @@ const ViewReports = () => {
         <table className="table table-bordered">
           <thead className="table-light">
             <tr>
+              <th>Report #</th>
               <th>Date</th>
               <th>Location</th>
               <th>Status</th>
               <th>Start Time</th>
               <th>End Time</th>
-              <th>Actions</th>
-            <td><button className='btn btn-sm btn-outline-primary'>View Details</button></td></tr>
+              <th>Actions</th></tr>
           </thead>
           <tbody>
             {reports.map((report, index) => (
               <tr key={index}>
+                <td><a href={`/report/${report.id}`} className="text-decoration-none">{report.report_number}</a></td>
                 <td>{report.date}</td>
                 <td>{report.locations?.name || 'Unknown'}</td>
                 <td>{report.status}</td>
                 <td>{report.start_time}</td>
-                <td>{report.end_time}</td>
+                $1
+                <td><button className='btn btn-sm btn-outline-primary'>View Details</button></td>
               </tr>
             ))}
           </tbody>
