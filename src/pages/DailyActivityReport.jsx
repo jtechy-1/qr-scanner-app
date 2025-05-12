@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import { supabase } from '../lib/supabaseClient';
 
 const DailyActivityReport = () => {
@@ -36,6 +38,18 @@ const DailyActivityReport = () => {
   };
 
   const handleSubmit = async () => {
+    const { data: session } = await supabase.auth.getSession();
+    const userId = session?.session?.user?.id;
+
+    if (!userId) {
+      toast.error('You must be logged in to submit a report.');
+      return;
+    }
+
+    if (!report.location_id || !report.date || !report.start_time || !report.end_time) {
+      toast.warning('Please fill in all required fields.');
+      return;
+    }
     let uploadedUrls = [];
     for (const photo of report.photos) {
       const fileName = `${Date.now()}-${photo.name}`;
@@ -54,12 +68,25 @@ const DailyActivityReport = () => {
       entries: report.entries,
       photos: uploadedUrls,
       status: report.status,
+      employee_id: userId,
     });
 
     if (!insertError) {
-      alert('Report saved successfully as Draft.');
+      toast.success(`Report saved successfully as ${report.status}.`);
+      setReport({
+        location_id: '',
+        date: '',
+        start_time: '',
+        end_time: '',
+        entries: [''],
+        photos: [],
+        status: 'Draft',
+      });
+      setTimeout(() => {
+        window.location.href = '/view-reports';
+      }, 1000);
     } else {
-      alert('Failed to save report.');
+      toast.error('Failed to save report.');
     }
   };
 
@@ -116,8 +143,8 @@ const DailyActivityReport = () => {
         setReport(prev => ({ ...prev, status: 'Review' }));
         handleSubmit();
       }}>Submit for Review</button>
-    </div>
-  );
+    <ToastContainer position="top-right" autoClose={3000} />
+    </div>);
 };
 
 export default DailyActivityReport;
