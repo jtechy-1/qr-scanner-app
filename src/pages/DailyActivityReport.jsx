@@ -4,6 +4,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import { supabase } from '../lib/supabaseClient';
 
 const DailyActivityReport = () => {
+  const [submitting, setSubmitting] = useState(false);
   const [locations, setLocations] = useState([]);
   const [report, setReport] = useState({
     location_id: '',
@@ -46,6 +47,7 @@ const DailyActivityReport = () => {
   };
 
   const handleSubmit = async () => {
+    setSubmitting(true);
         const { data: session } = await supabase.auth.getSession();
     const userId = session?.session?.user?.id;
 
@@ -101,11 +103,18 @@ const DailyActivityReport = () => {
         report_number: '',
       });
       setTimeout(() => {
+        setSubmitting(false);
         window.location.href = '/view-reports';
       }, 1000);
     } else {
       toast.error('Failed to save report.');
+      setSubmitting(false);
     }
+  };
+
+  const submitWithStatus = (status) => {
+    setReport(prev => ({ ...prev, status }));
+    setTimeout(handleSubmit, 0);
   };
 
   return (
@@ -185,11 +194,8 @@ const DailyActivityReport = () => {
         <input type="file" className="form-control" multiple onChange={handleFileChange} />
       </div>
 
-      <button className="btn btn-outline-secondary me-2" onClick={() => setReport(prev => ({ ...prev, status: 'Draft' }))}>Save as Draft</button>
-      <button className="btn btn-success" onClick={() => {
-        setReport(prev => ({ ...prev, status: 'Review' }));
-        handleSubmit();
-      }}>Submit for Review</button>
+      <button className="btn btn-outline-secondary me-2" onClick={() => submitWithStatus('Draft')} disabled={submitting}>Save as Draft</button>
+      <button className="btn btn-success" onClick={() => submitWithStatus('Review')} disabled={submitting}>Submit for Review</button>
     <ToastContainer position="top-right" autoClose={3000} />
     </div>);
 };
