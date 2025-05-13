@@ -9,7 +9,6 @@ const AddEmployee = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // 1. Sign up to Supabase Auth
     const { data: authData, error: authError } = await supabase.auth.admin.createUser({
       email: form.email,
       password: form.password,
@@ -23,7 +22,6 @@ const AddEmployee = () => {
 
     const userId = authData.user.id;
 
-    // 2. Add to employees table
     const { error: dbError } = await supabase.from('employees').insert([
       {
         id: userId,
@@ -46,18 +44,18 @@ const AddEmployee = () => {
   return (
     <div className="container mt-4">
       <h3>Add New Employee</h3>
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} autoComplete="off">
         <div className="mb-3">
           <label>Name</label>
-          <input className="form-control" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required />
+          <input className="form-control" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required autoComplete="off" />
         </div>
         <div className="mb-3">
           <label>Email</label>
-          <input className="form-control" type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} required />
+          <input className="form-control" type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} required autoComplete="off" />
         </div>
         <div className="mb-3">
           <label>Password</label>
-          <input className="form-control" type="password" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} required />
+          <input className="form-control" type="password" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} required autoComplete="new-password" />
         </div>
         <div className="mb-3">
           <label>Role</label>
