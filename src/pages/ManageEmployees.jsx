@@ -107,7 +107,7 @@ const ManageEmployees = () => {
               {paginatedEmployees.map(emp => (
                 <tr key={emp.id}>
                   <td>{emp.name}</td>
-                  <td>{emp.email}</td>
+                  <td>{emp.username}</td>
                   <td>{emp.status}</td>
                   <td>
                     <button className="btn btn-sm btn-primary me-2" onClick={() => navigate(`/edit-employee/${emp.id}`)}>Edit</button>
