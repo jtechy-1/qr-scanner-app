@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabaseClient';
+import { useNavigate } from 'react-router-dom';
 
 const ViewReports = () => {
   const [reports, setReports] = useState([]);
@@ -8,6 +9,7 @@ const ViewReports = () => {
   const [endDate, setEndDate] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const savedStart = localStorage.getItem('reportFilterStart');
@@ -88,18 +90,25 @@ const ViewReports = () => {
               <th>Status</th>
               <th>Start Time</th>
               <th>End Time</th>
-              <th>Actions</th></tr>
+              <th>Actions</th>
+            </tr>
           </thead>
           <tbody>
             {filteredReports.map((report, index) => (
               <tr key={index}>
-                <td><a href={`/report/${report.id}`} className="text-decoration-none">{report.report_number}</a></td>
+                <td>
+                  <a href={`/report/${report.id}`} className="text-decoration-none">
+                    {report.report_number}
+                  </a>
+                </td>
                 <td>{report.date}</td>
                 <td>{report.locations?.name || 'Unknown'}</td>
                 <td>{report.status}</td>
                 <td>{report.start_time}</td>
                 <td>{report.end_time}</td>
-                <td><button className='btn btn-sm btn-outline-primary'>View Details</button></td>
+                <td>
+                  <button className='btn btn-sm btn-outline-primary' onClick={() => navigate(`/report/${report.id}`)}>View Details</button>
+                </td>
               </tr>
             ))}
           </tbody>
