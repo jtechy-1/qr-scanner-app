@@ -16,6 +16,7 @@ const DailyActivityReport = () => {
     status: 'Draft',
     report_number: ''
   });
+
   useEffect(() => {
     const generateReportNumber = async () => {
       const { count } = await supabase.from('reports').select('id', { count: 'exact', head: true });
@@ -46,28 +47,34 @@ const DailyActivityReport = () => {
     setReport(prev => ({ ...prev, photos: Array.from(e.target.files) }));
   };
 
-  const handleSubmit = async () => {
+  const submitWithStatus = async (status) => {
     setSubmitting(true);
-        const { data: session } = await supabase.auth.getSession();
+    const updatedReport = { ...report, status };
+
+    const { data: session } = await supabase.auth.getSession();
     const userId = session?.session?.user?.id;
 
     if (!userId) {
       toast.error('You must be logged in to submit a report.');
+      setSubmitting(false);
       return;
     }
 
-    if (!report.location_id || !report.date || !report.start_time || !report.end_time) {
+    if (!updatedReport.location_id || !updatedReport.date || !updatedReport.start_time || !updatedReport.end_time) {
       toast.warning('Please fill in all required fields.');
+      setSubmitting(false);
       return;
     }
 
-    const incompleteEntry = report.entries.some(entry => !entry.time || !entry.note);
+    const incompleteEntry = updatedReport.entries.some(entry => !entry.time || !entry.note);
     if (incompleteEntry) {
       toast.warning('Each entry must include a time and note.');
+      setSubmitting(false);
       return;
     }
+
     let uploadedUrls = [];
-    for (const photo of report.photos) {
+    for (const photo of updatedReport.photos) {
       const fileName = `${Date.now()}-${photo.name}`;
       const { data, error } = await supabase.storage.from('report_photos').upload(fileName, photo);
       if (!error) {
@@ -76,22 +83,22 @@ const DailyActivityReport = () => {
       }
     }
 
-    const submittedAt = report.status === 'Review' ? new Date().toISOString() : null;
+    const submittedAt = status === 'Review' ? new Date().toISOString() : null;
     const { error: insertError } = await supabase.from('reports').insert({
-      location_id: report.location_id,
-      date: report.date,
-      start_time: report.start_time,
-      end_time: report.end_time,
-      entries: report.entries,
+      location_id: updatedReport.location_id,
+      date: updatedReport.date,
+      start_time: updatedReport.start_time,
+      end_time: updatedReport.end_time,
+      entries: updatedReport.entries,
       photos: uploadedUrls,
-      report_number: report.report_number,
-      status: report.status,
+      report_number: updatedReport.report_number,
+      status: updatedReport.status,
       submitted_at: submittedAt,
       employee_id: userId,
     });
 
     if (!insertError) {
-      toast.success(`Report saved successfully as ${report.status}.`);
+      toast.success(`Report saved successfully as ${status}.`);
       setReport({
         location_id: '',
         date: '',
@@ -110,11 +117,6 @@ const DailyActivityReport = () => {
       toast.error('Failed to save report.');
       setSubmitting(false);
     }
-  };
-
-  const submitWithStatus = (status) => {
-    setReport(prev => ({ ...prev, status }));
-    setTimeout(handleSubmit, 0);
   };
 
   return (
@@ -196,8 +198,9 @@ const DailyActivityReport = () => {
 
       <button className="btn btn-outline-secondary me-2" onClick={() => submitWithStatus('Draft')} disabled={submitting}>Save as Draft</button>
       <button className="btn btn-success" onClick={() => submitWithStatus('Review')} disabled={submitting}>Submit for Review</button>
-    <ToastContainer position="top-right" autoClose={3000} />
-    </div>);
+      <ToastContainer position="top-right" autoClose={3000} />
+    </div>
+  );
 };
 
 export default DailyActivityReport;

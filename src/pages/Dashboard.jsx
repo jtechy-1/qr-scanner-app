@@ -30,6 +30,12 @@ const Dashboard = () => {
       link: '/manage-employees',
     },
     {
+      role: ['admin'],
+      icon: <Faemploy size={32} className="mb-2" />,
+      label: 'Assign Employees',
+      link: '/assign-employees',
+    },
+    {
       role: ['admin', 'user'],
       icon: <FaQrcode size={32} className="mb-2" />,
       label: 'QR Scanner',

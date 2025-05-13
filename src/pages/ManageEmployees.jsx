@@ -28,7 +28,7 @@ const ManageEmployees = () => {
   useEffect(() => {
     let filtered = [...employees];
     if (search) {
-      filtered = filtered.filter(emp => (emp.name + emp.email).toLowerCase().includes(search.toLowerCase()));
+      filtered = filtered.filter(emp => (emp.name + emp.username).toLowerCase().includes(search.toLowerCase()));
     }
     if (roleFilter) {
       filtered = filtered.filter(emp => emp.role === roleFilter);

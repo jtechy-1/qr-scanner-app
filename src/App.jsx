@@ -15,6 +15,7 @@ import ViewReports from './pages/ViewReports';
 import ReportDetails from './pages/ReportDetails';
 import EditEmployee from './pages/EditEmployee';
 import AddEmployee from './pages/AddEmployee';
+import AssignEmployee from './pages/AssignEmployees';
 
 const App = () => {
   const [user, setUser] = useState(null);
@@ -76,6 +77,7 @@ const App = () => {
                   <Route path="/add-employee" element={<AddEmployee />} />
                   <Route path="/manage-locations" element={<ManageLocations />} />
                   <Route path="/edit-employee/:id" element={<EditEmployee />} />
+                  <Route path="/assign-employee/:id" element={<AssignEmployee />} />
                 </>
               )}
               <Route path="/scanner" element={<QRScanner />} />
