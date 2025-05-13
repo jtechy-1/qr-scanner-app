@@ -13,6 +13,8 @@ import ManageLocations from './pages/ManageLocations';
 import DailyActivityReport from './pages/DailyActivityReport';
 import ViewReports from './pages/ViewReports';
 import ReportDetails from './pages/ReportDetails';
+import EditEmployee from './pages/EditEmployee';
+import AddEmployee from './pages/AddEmployee';
 
 const App = () => {
   const [user, setUser] = useState(null);
@@ -70,8 +72,10 @@ const App = () => {
               <Route path="/dashboard" element={<Dashboard />} />
               {role === 'admin' && (
                 <>
-                  <Route path="/manage_employees" element={<ManageEmployees />} />
+                  <Route path="/manage-employees" element={<ManageEmployees />} />
+                  <Route path="/add-employee" element={<AddEmployee />} />
                   <Route path="/manage-locations" element={<ManageLocations />} />
+                  <Route path="/edit-employee/:id" element={<EditEmployee />} />
                 </>
               )}
               <Route path="/scanner" element={<QRScanner />} />

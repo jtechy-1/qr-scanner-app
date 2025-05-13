@@ -7,6 +7,7 @@ const ViewReports = () => {
   const [userRole, setUserRole] = useState('');
   const [reports, setReports] = useState([]);
   const [filteredReports, setFilteredReports] = useState([]);
+  const [draftReports, setDraftReports] = useState([]);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
@@ -15,15 +16,25 @@ const ViewReports = () => {
 
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data: { user } }) => {
-      const { data } = await supabase.from('employees').select('role').eq('id', user.id).single();
-      setUserRole(data?.role || '');
+      const { data: roleData } = await supabase.from('employees').select('role').eq('id', user.id).single();
+      setUserRole(roleData?.role || '');
+
+      const { data: draftData } = await supabase
+        .from('reports')
+        .select('id, report_number, date')
+        .eq('employee_id', user.id)
+        .eq('status', 'Draft');
+
+      if (draftData) setDraftReports(draftData);
     });
+
     const savedStart = localStorage.getItem('reportFilterStart');
     const savedEnd = localStorage.getItem('reportFilterEnd');
     const savedStatus = localStorage.getItem('reportFilterStatus');
     if (savedStart) setStartDate(savedStart);
     if (savedEnd) setEndDate(savedEnd);
     if (savedStatus) setStatusFilter(savedStatus);
+
     const fetchReports = async () => {
       const { data, error } = await supabase.from('reports').select('*, locations(name)').order('date', { ascending: false });
       if (!error) {
@@ -39,30 +50,27 @@ const ViewReports = () => {
     <div className="container mt-4">
       <h3 className="text-primary mb-3">Report Log</h3>
       {userRole === 'employee' && (
-        <div className="mb-3 text-end">
-          <button
-            className="btn btn-primary"
-            onClick={async () => {
-              const { data: { user } } = await supabase.auth.getUser();
-              const { data } = await supabase
-                .from('reports')
-                .select('id')
-                .eq('employee_id', user.id)
-                .eq('status', 'Draft')
-                .order('created_at', { ascending: false })
-                .limit(1)
-                .single();
-              if (data?.id) {
-                const resume = window.confirm('You have a draft report. Do you want to continue it?');
-                if (resume) return navigate(`/report/${data.id}`);
-              }
-              navigate('/daily-report');
-            }}
-          >
-            Submit New Report
-          </button>
+        <div className="mb-3 d-flex justify-content-end gap-2">
+          <button className="btn btn-success" onClick={() => navigate('/daily-report')}>Submit New Report</button>
+          {draftReports.length > 0 && (
+            <div className="dropdown">
+              <button className="btn btn-warning dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                Continue Draft
+              </button>
+              <ul className="dropdown-menu">
+                {draftReports.map((draft) => (
+                  <li key={draft.id}>
+                    <button className="dropdown-item" onClick={() => navigate(`/report/${draft.id}`)}>
+                      #{draft.report_number} — {draft.date}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
       )}
+
       <div className="row mb-3">
         <div className="col-md-3">
           <label className="form-label">Start Date</label>
@@ -107,6 +115,7 @@ const ViewReports = () => {
           }}>Reset</button>
         </div>
       </div>
+
       {loading ? (
         <div>Loading...</div>
       ) : reports.length === 0 ? (
