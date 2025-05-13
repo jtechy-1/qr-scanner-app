@@ -77,7 +77,7 @@ const App = () => {
                   <Route path="/add-employee" element={<AddEmployee />} />
                   <Route path="/manage-locations" element={<ManageLocations />} />
                   <Route path="/edit-employee/:id" element={<EditEmployee />} />
-                  <Route path="/assign-employee/:id" element={<AssignEmployee />} />
+                  <Route path="/assign-employee" element={<AssignEmployee />} />
                 </>
               )}
               <Route path="/scanner" element={<QRScanner />} />
