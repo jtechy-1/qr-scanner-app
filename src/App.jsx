@@ -15,7 +15,7 @@ import ViewReports from './pages/ViewReports';
 import ReportDetails from './pages/ReportDetails';
 import EditEmployee from './pages/EditEmployee';
 import AddEmployee from './pages/AddEmployee';
-import AssignEmployee from './pages/AssignEmployees';
+import AssignEmployee from './pages/AssignEmployee';
 
 const App = () => {
   const [user, setUser] = useState(null);
