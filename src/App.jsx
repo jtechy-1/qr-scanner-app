@@ -12,6 +12,7 @@ import ManageEmployees from './pages/ManageEmployees';
 import ManageLocations from './pages/ManageLocations';
 import DailyActivityReport from './pages/DailyActivityReport';
 import ViewReports from './pages/ViewReports';
+import ReportDetails from './pages/ReportDetails';
 
 const App = () => {
   const [user, setUser] = useState(null);
@@ -76,6 +77,7 @@ const App = () => {
               <Route path="/scanner" element={<QRScanner />} />
               <Route path="/daily-report" element={<DailyActivityReport />} />
               <Route path="/view-reports" element={<ViewReports />} />
+              <Route path="/report/:id" element={<ReportDetails />} />
               <Route path="*" element={<Navigate to="/dashboard" />} />
             </>
           )}
