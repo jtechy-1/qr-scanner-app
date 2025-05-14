@@ -1,70 +1,118 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabaseClient';
 
-const AssignEmployee = () => {
-  const [employees, setEmployees] = useState([]);
+const AssignEmployees = () => {
   const [locations, setLocations] = useState([]);
-  const [assignments, setAssignments] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [selectedLocationId, setSelectedLocationId] = useState('');
+  const [allEmployees, setAllEmployees] = useState([]);
+  const [assignedEmployees, setAssignedEmployees] = useState([]);
+  const [unassignedEmployees, setUnassignedEmployees] = useState([]);
 
   useEffect(() => {
-    const fetchData = async () => {
-      const empRes = await supabase.from('employees').select('id, name');
-      const locRes = await supabase.from('locations').select('id, name');
-      const asnRes = await supabase.from('assignments').select('*');
-
-      if (!empRes.error) setEmployees(empRes.data);
-      if (!locRes.error) setLocations(locRes.data);
-      if (!asnRes.error) setAssignments(asnRes.data);
-      setLoading(false);
+    const fetchInitialData = async () => {
+      const { data: locs } = await supabase.from('locations').select('id, name');
+      const { data: emps } = await supabase.from('employees').select('id, name');
+      setLocations(locs || []);
+      setAllEmployees(emps || []);
     };
-    fetchData();
+    fetchInitialData();
   }, []);
 
-  const handleAssign = async (employeeId, locationId) => {
-    const { error } = await supabase.from('assignments').insert({ employee_id: employeeId, location_id: locationId });
-    if (!error) {
-      setAssignments(prev => [...prev, { employee_id: employeeId, location_id: locationId }]);
+  useEffect(() => {
+    if (!selectedLocationId) return;
+    const fetchAssignments = async () => {
+      const { data: assigned } = await supabase
+        .from('employee_locations')
+        .select('employee_id')
+        .eq('location_id', selectedLocationId);
+
+      const assignedIds = assigned.map(a => a.employee_id);
+      const assignedList = allEmployees.filter(emp => assignedIds.includes(emp.id));
+      const unassignedList = allEmployees.filter(emp => !assignedIds.includes(emp.id));
+      setAssignedEmployees(assignedList);
+      setUnassignedEmployees(unassignedList);
+    };
+    fetchAssignments();
+  }, [selectedLocationId, allEmployees]);
+
+  const moveToAssigned = (id) => {
+    const emp = unassignedEmployees.find(e => e.id === id);
+    if (emp) {
+      setUnassignedEmployees(prev => prev.filter(e => e.id !== id));
+      setAssignedEmployees(prev => [...prev, emp]);
     }
+  };
+
+  const moveToUnassigned = (id) => {
+    const emp = assignedEmployees.find(e => e.id === id);
+    if (emp) {
+      setAssignedEmployees(prev => prev.filter(e => e.id !== id));
+      setUnassignedEmployees(prev => [...prev, emp]);
+    }
+  };
+
+  const handleSave = async () => {
+    if (!selectedLocationId) return;
+    await supabase.from('employee_locations').delete().eq('location_id', selectedLocationId);
+    if (assignedEmployees.length > 0) {
+      const rows = assignedEmployees.map(emp => ({
+        employee_id: emp.id,
+        location_id: selectedLocationId,
+      }));
+      await supabase.from('employee_locations').insert(rows);
+    }
+    alert('Assignments saved.');
   };
 
   return (
     <div className="container mt-4">
-      <h3 className="text-primary mb-3">Assign Employees to Locations</h3>
+      <h3 className="text-primary mb-3">Assign Employees to Location</h3>
+
       <div className="mb-3">
-        <a href="/dashboard" className="btn btn-outline-secondary">← Back to Dashboard</a>
-      </div>
-      {loading ? (
-        <div>Loading...</div>
-      ) : (
-        <div className="row">
-          {employees.map(emp => (
-            <div key={emp.id} className="col-md-6 mb-4">
-              <div className="card">
-                <div className="card-body">
-                  <h5 className="card-title">{emp.name}</h5>
-                  <select
-                    className="form-select"
-                    onChange={(e) => handleAssign(emp.id, e.target.value)}
-                    defaultValue=""
-                  >
-                    <option value="" disabled>
-                      Select Location
-                    </option>
-                    {locations.map(loc => (
-                      <option key={loc.id} value={loc.id}>
-                        {loc.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-            </div>
+        <label>Select Location</label>
+        <select className="form-select" value={selectedLocationId} onChange={(e) => setSelectedLocationId(e.target.value)}>
+          <option value="">-- Select a Location --</option>
+          {locations.map(loc => (
+            <option key={loc.id} value={loc.id}>{loc.name}</option>
           ))}
+        </select>
+      </div>
+
+      {selectedLocationId && (
+        <div className="row mt-4">
+          <div className="col-md-5">
+            <h5>Unassigned Employees</h5>
+            <ul className="list-group">
+              {unassignedEmployees.map(emp => (
+                <li key={emp.id} className="list-group-item d-flex justify-content-between align-items-center">
+                  {emp.name}
+                  <button className="btn btn-sm btn-outline-primary" onClick={() => moveToAssigned(emp.id)}>→</button>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div className="col-md-2 d-flex align-items-center justify-content-center">
+            <div>
+              <button className="btn btn-success mt-2" onClick={handleSave}>Save</button>
+            </div>
+          </div>
+
+          <div className="col-md-5">
+            <h5>Assigned Employees</h5>
+            <ul className="list-group">
+              {assignedEmployees.map(emp => (
+                <li key={emp.id} className="list-group-item d-flex justify-content-between align-items-center">
+                  {emp.name}
+                  <button className="btn btn-sm btn-outline-danger" onClick={() => moveToUnassigned(emp.id)}>←</button>
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
       )}
     </div>
   );
 };
 
-export default AssignEmployee;
+export default AssignEmployees;
