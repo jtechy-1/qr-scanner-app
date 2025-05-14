@@ -31,7 +31,7 @@ const Dashboard = () => {
     },
     {
       role: ['admin'],
-      icon: <Faemploy size={32} className="mb-2" />,
+      icon: <FaUsersCog size={32} className="mb-2" />,
       label: 'Assign Employees',
       link: '/assign-employees',
     },
