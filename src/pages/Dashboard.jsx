@@ -5,13 +5,17 @@ import { supabase } from '../lib/supabaseClient';
 
 const Dashboard = () => {
   const [role, setRole] = useState('');
+  const [employeeName, setEmployeeName] = useState('');
   const navigate = useNavigate();
 
   useEffect(() => {
     const fetchRole = async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      const { data } = await supabase.from('employees').select('role').eq('id', user.id).single();
-      if (data) setRole(data.role);
+      const { data } = await supabase.from('employees').select('role, name').eq('id', user.id).single();
+      if (data) {
+        setRole(data.role);
+        setEmployeeName(data.name);
+      }
     };
     fetchRole();
   }, []);
@@ -28,12 +32,6 @@ const Dashboard = () => {
       icon: <FaUsersCog size={32} className="mb-2" />,
       label: 'Employees',
       link: '/manage-employees',
-    },
-    {
-      role: ['admin'],
-      icon: <FaUsersCog size={32} className="mb-2" />,
-      label: 'Assign Employees',
-      link: '/assign-employees',
     },
     {
       role: ['admin', 'user'],
@@ -57,7 +55,8 @@ const Dashboard = () => {
 
   return (
     <div className="container mt-5">
-      <h2 className="text-center text-primary mb-4">Dashboard</h2>
+      <h2 className="text-center text-primary mb-1">Dashboard</h2>
+      {employeeName && <p className="text-center text-muted mb-4">Welcome, {employeeName}</p>}
       <div className="row">
         {cards.filter(card => card.role.includes(role)).map((card, index) => (
           <div key={index} className="col-md-3 mb-4">

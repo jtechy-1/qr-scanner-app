@@ -1,145 +1,146 @@
-import { useParams } from 'react-router-dom';
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import { supabase } from '../lib/supabaseClient';
 
 const ReportDetails = () => {
-  const { id } = useParams();
+  const navigate = useNavigate();
+  const [entries, setEntries] = useState([]);
+  const [newEntry, setNewEntry] = useState({ time: '', note: '' });
+  const [photos, setPhotos] = useState([]);
   const [report, setReport] = useState(null);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchReport = async () => {
-      const { data, error } = await supabase
-        .from('reports')
-        .select('*, locations(name)')
-        .eq('id', id)
-        .single();
-      if (!error) setReport(data);
-      setLoading(false);
-    };
-    fetchReport();
-  }, [id]);
+    const draft = localStorage.getItem('daily_report_draft');
+    if (!draft) return navigate('/');
+    setReport(JSON.parse(draft));
+  }, [navigate]);
 
-  const handleSaveAll = async () => {
-    const updated = report.entries.map((entry, index) => {
-      const time = document.getElementById(`editTime-${index}`).value;
-      const note = document.getElementById(`editNote-${index}`).value;
-      return { time, note };
-    });
-    const { error } = await supabase.from('reports').update({ entries: updated }).eq('id', report.id);
-    if (!error) setReport(prev => ({ ...prev, entries: updated }));
+  const addEntry = () => {
+    if (!newEntry.time || !newEntry.note) {
+      toast.warning('Please enter both time and note.');
+      return;
+    }
+    setEntries([...entries, newEntry]);
+    setNewEntry({ time: '', note: '' });
   };
 
-  const handleCancelAll = () => {
-    report.entries.forEach((entry, index) => {
-      const timeInput = document.getElementById(`editTime-${index}`);
-      const noteInput = document.getElementById(`editNote-${index}`);
-      if (timeInput && noteInput) {
-        timeInput.value = entry.time;
-        noteInput.value = entry.note;
-      }
-    });
+  const removeEntry = (index) => {
+    const updated = [...entries];
+    updated.splice(index, 1);
+    setEntries(updated);
   };
 
-  if (loading) return (
-    <div className="d-flex justify-content-center mt-5" id="report-content">
-      <div className="spinner-border text-primary" role="status">
-        <span className="visually-hidden">Loading...</span>
-      </div>
-    </div>
-  );
+  const handlePhotoUpload = (e) => {
+    const files = Array.from(e.target.files);
+    const urls = files.map(file => URL.createObjectURL(file));
+    setPhotos(prev => [...prev, ...urls]);
+  };
 
-  if (!report) return (
-    <div className="container mt-4" id="report-content" style={{ fontFamily: 'Arial, sans-serif', fontSize: '14px', lineHeight: '1.6' }}>
-      Report not found.
-    </div>
-  );
+  const removePhoto = (index) => {
+    const updated = [...photos];
+    updated.splice(index, 1);
+    setPhotos(updated);
+  };
+
+  const handleCancel = () => {
+    const confirmed = window.confirm('Are you sure you want to cancel? Your report will not be saved.');
+    if (confirmed) {
+      navigate('/dashboard');
+    }
+  };
+
+  const handleSave = async () => {
+    const confirmed = window.confirm('Do you want to save this report?');
+    if (!confirmed) return;
+
+    const { data: session } = await supabase.auth.getSession();
+    const userId = session?.session?.user?.id;
+
+    const { error } = await supabase.from('reports').insert({
+      ...report,
+      employee_id: userId,
+      status: 'Draft',
+      entries,
+      photos
+    });
+
+    if (error) {
+      toast.error('Failed to save report.');
+    } else {
+      toast.success('Report saved.');
+      localStorage.removeItem('daily_report_draft');
+      localStorage.removeItem('report_entries');
+      localStorage.removeItem('report_photos');
+      setTimeout(() => navigate('/view-reports'), 2000);
+    }
+  };
 
   return (
-    <div className="container mt-4" id="report-content">
-      <h3 className="text-primary mb-3">Report #{report.report_number}</h3>
-      <button className="btn btn-sm btn-outline-secondary mb-3 d-print-none" onClick={async () => {
-        const input = document.getElementById('report-content');
-        if (!input) return;
-        const canvas = await html2canvas(input, {
-          ignoreElements: (el) => el.classList.contains('d-print-none')
-        });
-        const imgData = canvas.toDataURL('image/png');
-        const pdf = new jsPDF();
-        const width = pdf.internal.pageSize.getWidth();
-        const height = (canvas.height * width) / canvas.width;
-        pdf.addImage(imgData, 'PNG', 0, 0, width, height);
-        pdf.save(`${report.report_number || 'report'}.pdf`);
-      }}>Download PDF</button>
+    <div className="container mt-4">
+      <h3 className="text-primary mb-3">Report Details</h3>
 
-      <p><strong>Date:</strong> {report.date}</p>
-      <p><strong>Location:</strong> {report.locations?.name || 'Unknown'}</p>
-      <p><strong>Status:</strong> {report.status}</p>
-      <p><strong>Start Time:</strong> {report.start_time}</p>
-      <p><strong>End Time:</strong> {report.end_time}</p>
+      <div className="mb-3">
+        <label className="form-label">Time</label>
+        <input
+          type="time"
+          className="form-control"
+          value={newEntry.time}
+          onChange={e => setNewEntry({ ...newEntry, time: e.target.value })}
+        />
+      </div>
 
-      <h5 className="mt-4">Hourly Entries</h5>
-      <ul className="list-group mb-3" style={{ border: '1px solid #ccc', borderRadius: '4px', padding: '10px' }}>
-        {report.entries?.map((entry, index) => (
-          <li key={index} className="list-group-item d-flex justify-content-between align-items-center" style={{ border: 'none', padding: '6px 0' }}>
-            <div>
-              <input type="time" defaultValue={entry.time} id={`editTime-${index}`} className="form-control form-control-sm d-inline-block me-2" style={{ width: '100px' }} />
-              <input type="text" defaultValue={entry.note} id={`editNote-${index}`} className="form-control form-control-sm d-inline-block me-2" style={{ width: '300px' }} />
-              <button className="btn btn-sm btn-outline-danger" onClick={async () => {
-                const updated = report.entries.filter((_, i) => i !== index);
-                const { error } = await supabase.from('reports').update({ entries: updated }).eq('id', report.id);
-                if (!error) setReport(prev => ({ ...prev, entries: updated }));
-              }}>Delete</button>
-            </div>
+      <div className="mb-3">
+        <label className="form-label">Note</label>
+        <input
+          type="text"
+          className="form-control"
+          placeholder="Enter description"
+          value={newEntry.note}
+          onChange={e => setNewEntry({ ...newEntry, note: e.target.value })}
+        />
+      </div>
+
+      <button className="btn btn-primary mb-3" onClick={addEntry}>Add Entry</button>
+
+      <ul className="list-group mb-3">
+        {entries.map((entry, index) => (
+          <li key={index} className="list-group-item d-flex justify-content-between align-items-center">
+            <span><strong>{entry.time}</strong> - {entry.note}</span>
+            <button className="btn btn-sm btn-danger" onClick={() => removeEntry(index)}>Delete</button>
           </li>
         ))}
       </ul>
 
-      {report.status === 'Draft' && report.entries?.length > 0 && (
-        <div className="mb-3">
-          <button className="btn btn-success me-2" onClick={handleSaveAll}>Save All</button>
-          <button className="btn btn-secondary" onClick={handleCancelAll}>Cancel All</button>
+      <div className="mb-4">
+        <label className="form-label">Upload Photos</label>
+        <input
+          type="file"
+          accept="image/*"
+          multiple
+          className="form-control"
+          onChange={handlePhotoUpload}
+        />
+        <div className="d-flex flex-wrap mt-3 gap-2">
+          {photos.map((url, index) => (
+            <div key={index} className="position-relative">
+              <img src={url} alt={`Uploaded ${index + 1}`} className="img-thumbnail" style={{ width: '100px' }} />
+              <button
+                className="btn btn-sm btn-close position-absolute top-0 end-0"
+                onClick={() => removePhoto(index)}
+              ></button>
+            </div>
+          ))}
         </div>
-      )}
-
-      {report.status === 'Draft' && (
-        <div className="mb-4">
-          <h6>Add Entry</h6>
-          <div className="row g-2">
-            <div className="col-md-3">
-              <input type="time" className="form-control" id="entryTime" />
-            </div>
-            <div className="col-md-7">
-              <input type="text" className="form-control" id="entryNote" placeholder="Note" />
-            </div>
-            <div className="col-md-2">
-              <button className="btn btn-primary w-100" onClick={async () => {
-                const time = document.getElementById('entryTime').value;
-                const note = document.getElementById('entryNote').value;
-                if (!time || !note) return alert('Please enter both time and note.');
-                const updatedEntries = [...report.entries, { time, note }];
-                const { error } = await supabase.from('reports').update({ entries: updatedEntries }).eq('id', report.id);
-                if (!error) setReport(prev => ({ ...prev, entries: updatedEntries }));
-                document.getElementById('entryTime').value = '';
-                document.getElementById('entryNote').value = '';
-              }}>Add</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      <h5>Photos</h5>
-      <div className="d-flex flex-wrap gap-2">
-        {report.photos && report.photos.length > 0 ? (
-          report.photos.map((url, index) => (
-            <img key={index} src={url} alt={`Photo ${index + 1}`} className="img-thumbnail" style={{ maxWidth: '120px', border: '1px solid #ccc', padding: '2px' }} />
-          ))
-        ) : (
-          <p>No photos attached.</p>
-        )}
       </div>
+
+      <div className="d-flex justify-content-between">
+        <button className="btn btn-outline-secondary" onClick={handleCancel}>Cancel</button>
+        <button className="btn btn-success" onClick={handleSave}>Save</button>
+      </div>
+
+      <ToastContainer position="top-right" autoClose={3000} />
     </div>
   );
 };

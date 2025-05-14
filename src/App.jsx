@@ -15,7 +15,7 @@ import ViewReports from './pages/ViewReports';
 import ReportDetails from './pages/ReportDetails';
 import EditEmployee from './pages/EditEmployee';
 import AddEmployee from './pages/AddEmployee';
-import AssignEmployees from './pages/AssignEmployees';
+import ReviewReport from './pages/ReviewReport';
 
 const App = () => {
   const [user, setUser] = useState(null);
@@ -28,14 +28,14 @@ const App = () => {
         data: { session },
       } = await supabase.auth.getSession();
 
-      const user = session?.user || null;
-      setUser(user);
+      const currentUser = session?.user || null;
+      setUser(currentUser);
 
-      if (user) {
+      if (currentUser) {
         const { data, error } = await supabase
           .from('employees')
           .select('role')
-          .eq('id', user.id)
+          .eq('id', currentUser.id)
           .single();
 
         if (!error) {
@@ -51,7 +51,8 @@ const App = () => {
     fetchUserAndRole();
 
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user || null);
+      const currentUser = session?.user || null;
+      setUser(currentUser);
       if (!session) setRole(null);
     });
 
@@ -77,13 +78,14 @@ const App = () => {
                   <Route path="/add-employee" element={<AddEmployee />} />
                   <Route path="/manage-locations" element={<ManageLocations />} />
                   <Route path="/edit-employee/:id" element={<EditEmployee />} />
-                  <Route path="/assign-employees" element={<AssignEmployees />} />
                 </>
               )}
               <Route path="/scanner" element={<QRScanner />} />
               <Route path="/daily-report" element={<DailyActivityReport />} />
               <Route path="/view-reports" element={<ViewReports />} />
               <Route path="/report/:id" element={<ReportDetails />} />
+              <Route path="/report-details" element={<ReportDetails />} />
+              <Route path="/review-report" element={<ReviewReport />} />
               <Route path="*" element={<Navigate to="/dashboard" />} />
             </>
           )}
