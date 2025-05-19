@@ -274,8 +274,25 @@ const ManageLocations = () => {
               win.document.write('</body></html>');
               win.document.close();
               win.focus();
-              win.print();
-              win.close();
+
+              const images = win.document.images;
+              let loadedCount = 0;
+
+              for (let i = 0; i < images.length; i++) {
+                images[i].onload = () => {
+                  loadedCount++;
+                  if (loadedCount === images.length) {
+                    win.print();
+                    win.close();
+                  }
+                };
+              }
+
+              // fallback if images never fire onload
+              setTimeout(() => {
+                win.print();
+                win.close();
+              }, 3000);
             }}
           >
             Print Selected
