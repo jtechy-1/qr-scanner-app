@@ -7,7 +7,7 @@ const ManageEmployees = () => {
   const [filteredEmployees, setFilteredEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState('active');
   const [roleFilter, setRoleFilter] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
@@ -28,7 +28,7 @@ const ManageEmployees = () => {
   useEffect(() => {
     let filtered = [...employees];
     if (search) {
-      filtered = filtered.filter(emp => (emp.name + emp.username).toLowerCase().includes(search.toLowerCase()));
+      filtered = filtered.filter(emp => (emp.name + emp.email).toLowerCase().includes(search.toLowerCase()));
     }
     if (roleFilter) {
       filtered = filtered.filter(emp => emp.role === roleFilter);
@@ -83,7 +83,6 @@ const ManageEmployees = () => {
         </div>
         <div className="col-md-3">
           <select className="form-select" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
-            <option value="">All Statuses</option>
             <option value="active">Active</option>
             <option value="inactive">Inactive</option>
           </select>
@@ -98,8 +97,7 @@ const ManageEmployees = () => {
             <thead className="table-light">
               <tr>
                 <th>Name</th>
-                <th>Email</th>
-                <th>Status</th>
+                
                 <th>Actions</th>
               </tr>
             </thead>
@@ -107,8 +105,7 @@ const ManageEmployees = () => {
               {paginatedEmployees.map(emp => (
                 <tr key={emp.id}>
                   <td>{emp.name}</td>
-                  <td>{emp.username}</td>
-                  <td>{emp.status}</td>
+                  
                   <td>
                     <button className="btn btn-sm btn-primary me-2" onClick={() => navigate(`/edit-employee/${emp.id}`)}>Edit</button>
                     <button className="btn btn-sm btn-danger" onClick={() => handleDelete(emp.id)}>Delete</button>
