@@ -5,6 +5,8 @@ import 'react-toastify/dist/ReactToastify.css';
 import { supabase } from '../lib/supabaseClient';
 
 const ReportDetails = () => {
+  const [showModal, setShowModal] = useState(false);
+  const [modalAction, setModalAction] = useState(null);
   const navigate = useNavigate();
   const [entries, setEntries] = useState([]);
   const [newEntry, setNewEntry] = useState({ time: '', note: '' });
@@ -12,9 +14,37 @@ const ReportDetails = () => {
   const [report, setReport] = useState(null);
 
   useEffect(() => {
-    const draft = localStorage.getItem('daily_report_draft');
-    if (!draft) return navigate('/');
-    setReport(JSON.parse(draft));
+    const loadDraft = async () => {
+      const draft = localStorage.getItem('daily_report_draft');
+      if (!draft) return navigate('/');
+
+      const parsed = JSON.parse(draft);
+      const updatedReport = { ...parsed };
+
+      if (parsed.employee_id) {
+        const { data: empData } = await supabase
+          .from('employees')
+          .select('name')
+          .eq('id', parsed.employee_id)
+          .single();
+        updatedReport.employee_name = empData?.name;
+      }
+
+      if (parsed.location_id) {
+        const { data: locData } = await supabase
+          .from('locations')
+          .select('name')
+          .eq('id', parsed.location_id)
+          .single();
+        updatedReport.location_name = locData?.name;
+      }
+
+      setReport(updatedReport);
+      setEntries((parsed.entries || []).sort((a, b) => a.time.localeCompare(b.time)));
+      setPhotos(parsed.photos || []);
+    };
+
+    loadDraft();
   }, [navigate]);
 
   const addEntry = () => {
@@ -22,7 +52,7 @@ const ReportDetails = () => {
       toast.warning('Please enter both time and note.');
       return;
     }
-    setEntries([...entries, newEntry]);
+    setEntries([...entries, newEntry].sort((a, b) => a.time.localeCompare(b.time)));
     setNewEntry({ time: '', note: '' });
   };
 
@@ -45,41 +75,27 @@ const ReportDetails = () => {
   };
 
   const handleCancel = () => {
-    const confirmed = window.confirm('Are you sure you want to cancel? Your report will not be saved.');
-    if (confirmed) {
-      navigate('/dashboard');
-    }
+    setModalAction('cancel');
+    setShowModal(true);
   };
 
   const handleSave = async () => {
-    const confirmed = window.confirm('Do you want to save this report?');
-    if (!confirmed) return;
-
-    const { data: session } = await supabase.auth.getSession();
-    const userId = session?.session?.user?.id;
-
-    const { error } = await supabase.from('reports').insert({
-      ...report,
-      employee_id: userId,
-      status: 'Draft',
-      entries,
-      photos
-    });
-
-    if (error) {
-      toast.error('Failed to save report.');
-    } else {
-      toast.success('Report saved.');
-      localStorage.removeItem('daily_report_draft');
-      localStorage.removeItem('report_entries');
-      localStorage.removeItem('report_photos');
-      setTimeout(() => navigate('/view-reports'), 2000);
-    }
+    setModalAction('save');
+    setShowModal(true);
   };
 
   return (
     <div className="container mt-4">
       <h3 className="text-primary mb-3">Report Details</h3>
+
+      {report && (
+        <div className="mb-4">
+          <div><strong>Employee Name:</strong> {report.employee_name || 'N/A'}</div>
+          <div><strong>Location Name:</strong> {report.location_name || 'N/A'}</div>
+          <div><strong>Date:</strong> {report.date || 'N/A'}</div>
+          <div><strong>Start Time:</strong> {report.start_time || 'N/A'} &nbsp; <strong>End Time:</strong> {report.end_time || 'N/A'}</div>
+        </div>
+      )}
 
       <div className="mb-3">
         <label className="form-label">Time</label>
@@ -139,6 +155,83 @@ const ReportDetails = () => {
         <button className="btn btn-outline-secondary" onClick={handleCancel}>Cancel</button>
         <button className="btn btn-success" onClick={handleSave}>Save</button>
       </div>
+
+      {/* Modal */}
+      {showModal && (
+        <div className="modal fade show d-block" tabIndex="-1" role="dialog" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+          <div className="modal-dialog" role="document">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">Confirm Action</h5>
+                <button type="button" className="btn-close" onClick={() => setShowModal(false)}></button>
+              </div>
+              <div className="modal-body">
+                <p>{modalAction === 'save' ? 'Do you want to save this report?' : 'Are you sure you want to cancel? Your report will not be saved.'}</p>
+              </div>
+              <div className="modal-footer">
+                <button className="btn btn-secondary" onClick={() => setShowModal(false)}>Close</button>
+                <button className="btn btn-primary" onClick={async () => {
+                  setShowModal(false);
+                  if (modalAction === 'cancel') {
+                    navigate('/dashboard');
+                  } else if (modalAction === 'save') {
+                    const { data: session } = await supabase.auth.getSession();
+                    const userId = session?.session?.user?.id;
+
+                    let error, data;
+
+                    if (report.id) {
+                      const {
+                        id,
+                        date,
+                        start_time,
+                        end_time,
+                        location_id,
+                        report_number
+                      } = report;
+
+                      ({ error } = await supabase.from('reports').update({
+                        date,
+                        start_time,
+                        end_time,
+                        employee_id: userId,
+                        location_id,
+                        report_number,
+                        status: 'Draft',
+                        entries,
+                        photos
+                      }).eq('id', id));
+                    } else {
+                      ({ error, data } = await supabase.from('reports').insert({
+                        ...report,
+                        employee_id: userId,
+                        status: 'Draft',
+                        entries,
+                        photos
+                      }).select().single());
+
+                      if (!error && data) {
+                        setReport({ ...report, id: data.id });
+                        localStorage.setItem('daily_report_draft', JSON.stringify({ ...report, id: data.id, entries, photos }));
+                      }
+                    }
+
+                    if (error) {
+                      toast.error('Failed to save report: ' + error.message);
+                      console.error('Save error:', error);
+                    } else {
+                      const now = new Date().toLocaleString();
+                      localStorage.setItem('report_last_saved', now);
+                      toast.success('Report saved.');
+                      setTimeout(() => navigate('/view-reports'), 2000);
+                    }
+                  }
+                }}>Yes</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <ToastContainer position="top-right" autoClose={3000} />
     </div>

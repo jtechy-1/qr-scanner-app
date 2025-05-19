@@ -95,87 +95,97 @@ const ViewReports = () => {
                   <td>{report.status}</td>
                   <td>{report.start_time}</td>
                   <td>{report.end_time}</td>
-                  <td>
-                    {activeTab === 'Draft' && report.status === 'Draft' && (
-                      <button
-                        className='btn btn-sm btn-primary me-1'
-                        disabled={isIncomplete}
-                        title={isIncomplete ? 'Fill in all required fields before submitting' : ''}
-                        onClick={async () => {
-                          const confirm = window.confirm('Submit this report for review?');
-                          if (!confirm) return;
-                          const submittedAt = new Date().toISOString();
-                          const { error } = await supabase.from('reports').update({ status: 'Review', submitted_at: submittedAt }).eq('id', report.id);
-                          if (error) {
-                            toast.error('Failed to submit report.');
-                            return;
-                          }
-                          toast.success('Report submitted.');
-                          setDraftReports(prev => prev.filter(r => r.id !== report.id));
-                          setCompletedReports(prev => [...prev, { ...report, status: 'Review', submitted_at: submittedAt }]);
-                        }}
-                      >Submit Report</button>
-                    )}
-                    {userRole === 'admin' && activeTab === 'Completed' && report.status === 'Review' && (
-                      <>
-                        <button className='btn btn-sm btn-success me-1' onClick={async () => {
-                          const confirm = window.confirm('Approve this report?');
-                          if (!confirm) return;
-                          await supabase.from('reports').update({ status: 'Submitted' }).eq('id', report.id);
-                          toast.success('Approved.');
-                          setCompletedReports(prev => prev.map(r => r.id === report.id ? { ...r, status: 'Submitted' } : r));
-                        }}>Approve</button>
-                        <button className='btn btn-sm btn-warning me-1' onClick={async () => {
-                          const confirm = window.confirm('Return for editing?');
-                          if (!confirm) return;
-                          await supabase.from('reports').update({ status: 'Draft' }).eq('id', report.id);
-                          toast.info('Returned for edit.');
-                          setCompletedReports(prev => prev.filter(r => r.id !== report.id));
-                          setDraftReports(prev => [...prev, { ...report, status: 'Draft' }]);
-                        }}>Return</button>
-                      </>
-                    )}
-                    {activeTab === 'Deleted' ? (
-                      <button className='btn btn-sm btn-info' onClick={async () => {
-                        const confirm = window.confirm('Restore this report?');
-                        if (!confirm) return;
-                        await supabase.from('reports').update({ status: 'Draft', deleted_at: null }).eq('id', report.id);
-                        toast.success('Report restored.');
-                        setDeletedReports(prev => prev.filter(r => r.id !== report.id));
-                        setDraftReports(prev => [...prev, { ...report, status: 'Draft', deleted_at: null }]);
-                      }}>Restore</button>
-                    ) : (
-                      <button className='btn btn-sm btn-danger' onClick={async () => {
-  try {
-    const confirm = window.confirm('Move this report to the Deleted tab?');
-    if (!confirm) return;
+<td>
+  {activeTab === 'Draft' && report.status === 'Draft' && (
+    <>
+      <button
+        className='btn btn-sm btn-outline-secondary me-1'
+        onClick={() => {
+          localStorage.setItem('daily_report_draft', JSON.stringify(report));
+          navigate('/report-details');
+        }}
+      >✏️ Edit</button>
 
-    const deletedAt = new Date().toISOString();
-    const { error } = await supabase
-      .from('reports')
-      .update({ status: 'Deleted', deleted_at: deletedAt })
-      .eq('id', report.id);
+      <button
+        className='btn btn-sm btn-primary me-1'
+        disabled={isIncomplete}
+        title={isIncomplete ? 'Fill in all required fields before submitting' : ''}
+        onClick={async () => {
+          const confirm = window.confirm('Submit this report for review?');
+          if (!confirm) return;
+          const submittedAt = new Date().toISOString();
+          const { error } = await supabase.from('reports').update({ status: 'Review', submitted_at: submittedAt }).eq('id', report.id);
+          if (error) {
+            toast.error('Failed to submit report.');
+            return;
+          }
+          toast.success('Report submitted.');
+          setDraftReports(prev => prev.filter(r => r.id !== report.id));
+          setCompletedReports(prev => [...prev, { ...report, status: 'Review', submitted_at: submittedAt }]);
+        }}
+      >Submit Report</button>
+    </>
+  )}
+  {userRole === 'admin' && activeTab === 'Completed' && report.status === 'Review' && (
+    <>
+      <button className='btn btn-sm btn-success me-1' onClick={async () => {
+        const confirm = window.confirm('Approve this report?');
+        if (!confirm) return;
+        await supabase.from('reports').update({ status: 'Submitted' }).eq('id', report.id);
+        toast.success('Approved.');
+        setCompletedReports(prev => prev.map(r => r.id === report.id ? { ...r, status: 'Submitted' } : r));
+      }}>Approve</button>
+      <button className='btn btn-sm btn-warning me-1' onClick={async () => {
+        const confirm = window.confirm('Return for editing?');
+        if (!confirm) return;
+        await supabase.from('reports').update({ status: 'Draft' }).eq('id', report.id);
+        toast.info('Returned for edit.');
+        setCompletedReports(prev => prev.filter(r => r.id !== report.id));
+        setDraftReports(prev => [...prev, { ...report, status: 'Draft' }]);
+      }}>Return</button>
+    </>
+  )}
+  {activeTab === 'Deleted' ? (
+    <button className='btn btn-sm btn-info' onClick={async () => {
+      const confirm = window.confirm('Restore this report?');
+      if (!confirm) return;
+      await supabase.from('reports').update({ status: 'Draft', deleted_at: null }).eq('id', report.id);
+      toast.success('Report restored.');
+      setDeletedReports(prev => prev.filter(r => r.id !== report.id));
+      setDraftReports(prev => [...prev, { ...report, status: 'Draft', deleted_at: null }]);
+    }}>Restore</button>
+  ) : (
+    <button className='btn btn-sm btn-danger' onClick={async () => {
+      try {
+        const confirm = window.confirm('Move this report to the Deleted tab?');
+        if (!confirm) return;
 
-    if (error) {
-      toast.error('Delete failed: ' + error.message);
-      console.error('Delete error:', error);
-      return;
-    }
+        const deletedAt = new Date().toISOString();
+        const { error } = await supabase
+          .from('reports')
+          .update({ status: 'Deleted', deleted_at: deletedAt })
+          .eq('id', report.id);
 
-    toast.warning('Report moved to Deleted tab.');
-    if (activeTab === 'Draft') {
-      setDraftReports(prev => prev.filter(r => r.id !== report.id));
-    } else {
-      setCompletedReports(prev => prev.filter(r => r.id !== report.id));
-    }
-    setDeletedReports(prev => [...prev, { ...report, status: 'Deleted', deleted_at: deletedAt }]);
-  } catch (e) {
-    toast.error('Unexpected error deleting report.');
-    console.error('Unexpected error:', e);
-  }
-}}>Delete</button>
-                    )}
-                  </td>
+        if (error) {
+          toast.error('Delete failed: ' + error.message);
+          console.error('Delete error:', error);
+          return;
+        }
+
+        toast.warning('Report moved to Deleted tab.');
+        if (activeTab === 'Draft') {
+          setDraftReports(prev => prev.filter(r => r.id !== report.id));
+        } else {
+          setCompletedReports(prev => prev.filter(r => r.id !== report.id));
+        }
+        setDeletedReports(prev => [...prev, { ...report, status: 'Deleted', deleted_at: deletedAt }]);
+      } catch (e) {
+        toast.error('Unexpected error deleting report.');
+        console.error('Unexpected error:', e);
+      }
+    }}>Delete</button>
+  )}
+</td>
                 </tr>
               );
             })}

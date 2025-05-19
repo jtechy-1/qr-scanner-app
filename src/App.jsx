@@ -15,6 +15,7 @@ import ViewReports from './pages/ViewReports';
 import ReportDetails from './pages/ReportDetails';
 import EditEmployee from './pages/EditEmployee';
 import AddEmployee from './pages/AddEmployee';
+import AssignEmployees from './pages/AssignEmployees';
 import ReviewReport from './pages/ReviewReport';
 
 const App = () => {
@@ -74,9 +75,10 @@ const App = () => {
               <Route path="/dashboard" element={<Dashboard />} />
               {role === 'admin' && (
                 <>
+                  <Route path="/manage-locations" element={<ManageLocations />} />
                   <Route path="/manage-employees" element={<ManageEmployees />} />
                   <Route path="/add-employee" element={<AddEmployee />} />
-                  <Route path="/manage-locations" element={<ManageLocations />} />
+                  <Route path="/assign-employees" element={<AssignEmployees />} />
                   <Route path="/edit-employee/:id" element={<EditEmployee />} />
                 </>
               )}
