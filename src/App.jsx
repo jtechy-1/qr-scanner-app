@@ -17,6 +17,7 @@ import EditEmployee from './pages/EditEmployee';
 import AddEmployee from './pages/AddEmployee';
 import AssignEmployees from './pages/AssignEmployees';
 import ReviewReport from './pages/ReviewReport';
+import QRReports from './pages/QRReports';
 
 const App = () => {
   const [user, setUser] = useState(null);
@@ -88,6 +89,7 @@ const App = () => {
               <Route path="/report/:id" element={<ReportDetails />} />
               <Route path="/report-details" element={<ReportDetails />} />
               <Route path="/review-report" element={<ReviewReport />} />
+              <Route path="/qr-reports" element={<QRReports />} />
               <Route path="*" element={<Navigate to="/dashboard" />} />
             </>
           )}

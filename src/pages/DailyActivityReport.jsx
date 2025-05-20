@@ -15,37 +15,98 @@ const DailyActivityReport = () => {
     report_number: ''
   });
 
-  useEffect(() => {
-    const generateReportNumber = async () => {
-      const { count } = await supabase.from('reports').select('id', { count: 'exact', head: true });
-      const next = (count || 0) + 1;
-      const reportNum = `RPT-${next.toString().padStart(5, '0')}`;
-      setReport(prev => ({ ...prev, report_number: reportNum }));
-    };
-    generateReportNumber();
-
+  useEffect(() => { // cleaned up to remove report number generation
+    
     const fetchUserLocations = async () => {
       const { data: session } = await supabase.auth.getSession();
       const userId = session?.session?.user?.id;
+
       const { data } = await supabase
         .from('employee_locations')
-        .select('locations(id, name)')
+        .select('location_id, locations(name)')
         .eq('employee_id', userId);
 
       if (data) {
-        const locs = data.map(l => l.locations);
+        const locs = data.map(entry => ({ id: entry.location_id, name: entry.locations?.name || 'Unnamed' }));
         setLocations(locs);
       }
     };
     fetchUserLocations();
   }, []);
 
-  const handleNext = () => {
+  const handleNext = async () => {
+    if (locations.length === 0) {
+      toast.error('You have no assigned locations. Cannot create report.');
+      return;
+    }
     if (!report.location_id || !report.date || !report.start_time || !report.end_time) {
       toast.warning('Please fill in all required fields.');
       return;
     }
-    localStorage.setItem('daily_report_draft', JSON.stringify(report));
+
+    const { data: session } = await supabase.auth.getSession();
+    const userId = session?.session?.user?.id;
+
+    let employeeName = '';
+    if (userId) {
+      const { data: emp } = await supabase
+        .from('employees')
+        .select('name')
+        .eq('id', userId)
+        .single();
+      employeeName = emp?.name || '';
+    }
+
+    let locationName = '';
+    if (report.location_id) {
+      const { data: loc } = await supabase
+        .from('locations')
+        .select('name')
+        .eq('id', report.location_id)
+        .single();
+      locationName = loc?.name || '';
+    }
+
+    let reportData = { ...report };
+    const { data: newNumber, error: rptErr } = await supabase.rpc('get_next_report_number');
+    if (rptErr) {
+      toast.error('Failed to generate report number.');
+      return;
+    }
+    reportData.report_number = newNumber;
+    if (!reportData.report_number) {
+      toast.error('Report number was not generated. Please try again.');
+      return;
+    }
+    setReport(prev => ({ ...prev, report_number: newNumber }));
+
+    const { error, data: inserted } = await supabase.from('reports').insert({
+      date: reportData.date,
+      start_time: reportData.start_time,
+      end_time: reportData.end_time,
+      employee_id: userId,
+      location_id: reportData.location_id,
+      report_number: reportData.report_number,
+      status: 'Draft',
+      entries: [],
+      photos: []
+    }).select().single();
+
+    if (error) {
+      console.error('Supabase insert error:', error);
+      toast.error('Failed to save report to database: ' + error.message);
+      return;
+    }
+
+    reportData.id = inserted.id;
+
+    localStorage.setItem('daily_report_draft', JSON.stringify({
+      ...reportData,
+      employee_id: userId,
+      employee_name: employeeName,
+      location_name: locationName,
+      created_at: inserted.created_at
+    }));
     navigate('/report-details');
   };
 
@@ -91,7 +152,7 @@ const DailyActivityReport = () => {
 
       <div className="d-flex justify-content-between mt-4">
         <button className="btn btn-outline-secondary" onClick={handleCancel}>Cancel</button>
-        <button className="btn btn-primary" onClick={handleNext}>Next</button>
+        <button className="btn btn-primary" onClick={handleNext} disabled={!report.location_id || !report.date || !report.start_time || !report.end_time}>Next</button>
       </div>
 
       <ToastContainer position="top-right" autoClose={3000} />

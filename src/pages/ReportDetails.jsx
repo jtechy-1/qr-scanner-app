@@ -92,7 +92,7 @@ const ReportDetails = () => {
         <div className="mb-4">
           <div><strong>Employee Name:</strong> {report.employee_name || 'N/A'}</div>
           <div><strong>Location Name:</strong> {report.location_name || 'N/A'}</div>
-          <div><strong>Date:</strong> {report.date || 'N/A'}</div>
+          <div><strong>Date:</strong> {report.date || 'N/A'} &nbsp; <strong>Report #:</strong> {report.report_number || 'N/A'}</div>
           <div><strong>Start Time:</strong> {report.start_time || 'N/A'} &nbsp; <strong>End Time:</strong> {report.end_time || 'N/A'}</div>
         </div>
       )}
@@ -202,17 +202,32 @@ const ReportDetails = () => {
                         photos
                       }).eq('id', id));
                     } else {
+                      let reportNumber = report.report_number;
+
+                      if (!reportNumber) {
+                        const { data: rptNum, error: rptErr } = await supabase.rpc('get_next_report_number');
+                        if (rptErr) {
+                          toast.error('Failed to generate report number.');
+                          return;
+                        }
+                        reportNumber = rptNum;
+                      }
+
                       ({ error, data } = await supabase.from('reports').insert({
-                        ...report,
+                        date: report.date,
+                        start_time: report.start_time,
+                        end_time: report.end_time,
                         employee_id: userId,
+                        location_id: report.location_id,
+                        report_number: reportNumber || report.report_number,
                         status: 'Draft',
                         entries,
                         photos
                       }).select().single());
 
                       if (!error && data) {
-                        setReport({ ...report, id: data.id });
-                        localStorage.setItem('daily_report_draft', JSON.stringify({ ...report, id: data.id, entries, photos }));
+                        setReport({ ...report, id: data.id, report_number: reportNumber });
+                        localStorage.setItem('daily_report_draft', JSON.stringify({ ...report, id: data.id, entries, photos, report_number: reportNumber, employee_name: report.employee_name, location_name: report.location_name }));
                       }
                     }
 

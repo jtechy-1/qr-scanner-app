@@ -23,6 +23,12 @@ const Dashboard = () => {
   const cards = [
     {
       role: ['admin'],
+      icon: <FaClipboardList size={32} className="mb-2" />,
+      label: 'QR Reports',
+      link: '/qr-reports',
+    },
+    {
+      role: ['admin'],
       icon: <FaBuilding size={32} className="mb-2" />,      
       label: 'Locations',
       link: '/manage-locations',
@@ -61,7 +67,7 @@ const Dashboard = () => {
 
   return (
     <div className="container mt-5">
-      <h2 className="text-center text-primary mb-1">DMB SECURITY</h2>
+      <h2 className="text-center text-primary mb-1">Dashboard</h2>
       {employeeName && <p className="text-center text-muted mb-4">Welcome, {employeeName}</p>}
       <div className="row">
         {cards.filter(card => card.role.includes(role)).map((card, index) => (
