@@ -87,7 +87,7 @@ const QRReports = () => {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        from: 'onboarding@resend.dev>',
+        from: 'dazaeth@dmbsecurityservices.com',
         to: email,
         subject: `QR Report - ${report.location}`,
         html: htmlBody

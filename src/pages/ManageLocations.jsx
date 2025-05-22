@@ -268,9 +268,17 @@ const ManageLocations = () => {
               const selected = qrList.filter(qr => selectedQrCodes.includes(qr.id));
               const win = window.open('', 'PRINT', 'height=600,width=800');
               win.document.write('<html><head><title>Print QR Codes</title></head><body>');
+              win.document.write("<style>@media print { .qr-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; page-break-inside: avoid; } .qr-item { text-align: center; margin-bottom: 20px; } }</style>");
+              win.document.write('<div class="qr-grid">');
               selected.forEach(qr => {
-                win.document.write(`<div style='margin-bottom:20px;'><h4>${qr.label}</h4><img src='https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(qr.code_value)}' alt='${qr.label}' /></div>`);
+                win.document.write(`
+                  <div class='qr-item'>
+                    <h5 style="margin-bottom: 4px;">${qr.label}</h5>
+                    <img src='https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(qr.code_value)}' alt='${qr.label}' /><div style="margin-top: 4px;"><small>${locations.find(loc => loc.id === qr.location_id)?.name || ''}</small></div>
+                  </div>
+                `);
               });
+              win.document.write('</div>');
               win.document.write('</body></html>');
               win.document.close();
               win.focus();
