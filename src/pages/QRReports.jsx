@@ -101,9 +101,7 @@ const QRReports = () => {
       }
       showToast('Report emailed successfully');
     })
-    .then(data => {
-      showToast('Report emailed successfully');
-    })
+    
     .catch(err => {
       console.error('Failed to send email', err);
       showToast('Failed to email report');
