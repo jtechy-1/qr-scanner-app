@@ -80,10 +80,11 @@ const QRReports = () => {
       </table>
     `;
 
-    fetch('http://localhost:3001/send-email', {
+    fetch('https://dkrpawmussqqbjlrvasz.supabase.co/functions/v1/send-email', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
       },
       body: JSON.stringify({
         to: email,
@@ -91,7 +92,15 @@ const QRReports = () => {
         html: htmlBody
       })
     })
-    .then(res => res.json())
+    .then(async res => {
+      const data = await res.json();
+      if (!res.ok) {
+        console.error('❌ Email function responded with error:', data);
+        showToast(`Failed to email report: ${data.error || 'Unknown error'}`);
+        return;
+      }
+      showToast('Report emailed successfully');
+    })
     .then(data => {
       showToast('Report emailed successfully');
     })
