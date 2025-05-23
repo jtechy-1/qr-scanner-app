@@ -80,14 +80,12 @@ const QRReports = () => {
       </table>
     `;
 
-    fetch('https://api.resend.com/emails', {
+    fetch('http://localhost:3001/send-email', {
       method: 'POST',
       headers: {
-        'Authorization': `re_P1EaST9v_DQLLi9ZGCG4PDdeW8X5D66AV`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        from: 'dazaeth@dmbsecurityservices.com',
         to: email,
         subject: `QR Report - ${report.location}`,
         html: htmlBody

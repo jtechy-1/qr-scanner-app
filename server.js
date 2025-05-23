@@ -20,6 +20,10 @@ app.get('/', (req, res) => {
 app.post('/send-email', async (req, res) => {
   const { to, subject, html } = req.body;
 
+  if (!to || !subject || !html) {
+    return res.status(400).json({ success: false, error: 'Missing required fields: to, subject, or html.' });
+  }
+
   try {
     const data = await resend.emails.send({
       from: process.env.RESEND_FROM,
@@ -28,10 +32,15 @@ app.post('/send-email', async (req, res) => {
       html,
     });
 
+    if (!data || data.error) {
+      console.error('❌ Resend response error:', data?.error || 'No response');
+      return res.status(500).send({ success: false, error: data?.error || 'Failed to send email' });
+    }
+
     res.status(200).send({ success: true, data });
   } catch (error) {
-    console.error('❌ Resend error:', error?.message || error);
-    res.status(500).send({ success: false, error: error?.message || 'Unknown error' });
+    console.error('❌ Resend exception:', error);
+    res.status(500).send({ success: false, error: error?.message || 'Unknown server error' });
   }
 });
 
