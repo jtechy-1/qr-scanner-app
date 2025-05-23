@@ -2,7 +2,7 @@ name: Daily QR Report
 
 on:
   schedule:
-    - cron: '0 13 * * *'  # 6 AM PST = 13:00 UTC
+    - cron: '0 13 * * *'  # Runs every day at 6 AM PST (13:00 UTC)
   workflow_dispatch:
 
 jobs:
@@ -10,5 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Call Supabase Edge Function
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
         run: |
-          curl -X POST "https://dkrpawmussqqbjlrvasz.supabase.co/functions/v1/send-daily-reports?token=${{ secrets.CRON_SECRET }}"
+          curl -X POST "https://dkrpawmussqqbjlrvasz.supabase.co/functions/v1/send-daily-reports?token=${CRON_SECRET}"
